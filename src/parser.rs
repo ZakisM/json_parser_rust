@@ -7,7 +7,7 @@ enum Token<'a> {
     Eof,
     // Types
     String(TokenLiteral<'a>),
-    Number,
+    Number(TokenLiteral<'a>),
     // Delimiters
     LBrace,
     RBrace,
@@ -69,6 +69,20 @@ impl Lexer {
         &self.input[start_pos..self.position]
     }
 
+    fn read_number(&mut self) -> &[u8] {
+        let start_pos = self.position;
+
+        while let Some(c) = self.ch {
+            if !c.is_ascii_digit() {
+                break;
+            }
+
+            self.read_char();
+        }
+
+        &self.input[start_pos..self.position]
+    }
+
     fn next_token(&mut self) -> Token {
         self.skip_whitespace();
 
@@ -83,6 +97,12 @@ impl Lexer {
 
                 return Token::String(TokenLiteral(s));
             }
+            Some(other) if other.is_ascii_digit() => {
+                let s = self.read_number();
+
+                return Token::Number(TokenLiteral(s));
+            }
+            _ if self.read_position > self.input.len() => Token::Eof,
             _ => Token::Illegal,
         };
 
@@ -98,7 +118,7 @@ mod tests {
 
     #[test]
     fn parse_simple() {
-        let json = r#"{"key": "value"}"#;
+        let json = r#"{"key": 4}"#;
 
         let mut lexer = Lexer::new(json.to_owned());
 
@@ -107,9 +127,7 @@ mod tests {
         assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"key")));
         assert_eq!(lexer.next_token(), Token::DoubleQuote);
         assert_eq!(lexer.next_token(), Token::Colon);
-        assert_eq!(lexer.next_token(), Token::DoubleQuote);
-        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"value")));
-        assert_eq!(lexer.next_token(), Token::DoubleQuote);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"4")));
         assert_eq!(lexer.next_token(), Token::RBrace);
     }
 }
