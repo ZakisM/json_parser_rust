@@ -1,10 +1,13 @@
-#[derive(Debug)]
-enum Token {
+#[derive(Debug, PartialEq, Eq)]
+struct TokenLiteral<'a>(&'a [u8]);
+
+#[derive(Debug, PartialEq, Eq)]
+enum Token<'a> {
     Illegal,
     Eof,
-    // Identifiers
-    Ident,
-    Int,
+    // Types
+    String(TokenLiteral<'a>),
+    Number,
     // Delimiters
     LBrace,
     RBrace,
@@ -52,11 +55,34 @@ impl Lexer {
         }
     }
 
+    fn read_string(&mut self) -> &[u8] {
+        let start_pos = self.position;
+
+        while let Some(c) = self.ch {
+            if !c.is_ascii_alphabetic() {
+                break;
+            }
+
+            self.read_char();
+        }
+
+        &self.input[start_pos..self.position]
+    }
+
     fn next_token(&mut self) -> Token {
         self.skip_whitespace();
 
         let token = match self.ch {
             Some(b'{') => Token::LBrace,
+            Some(b'}') => Token::RBrace,
+            Some(b'"') => Token::DoubleQuote,
+            Some(b':') => Token::Colon,
+            Some(b',') => Token::Comma,
+            Some(other) if other.is_ascii_alphabetic() => {
+                let s = self.read_string();
+
+                return Token::String(TokenLiteral(s));
+            }
             _ => Token::Illegal,
         };
 
@@ -68,8 +94,22 @@ impl Lexer {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn parse_simple() {
         let json = r#"{"key": "value"}"#;
+
+        let mut lexer = Lexer::new(json.to_owned());
+
+        assert_eq!(lexer.next_token(), Token::LBrace);
+        assert_eq!(lexer.next_token(), Token::DoubleQuote);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"key")));
+        assert_eq!(lexer.next_token(), Token::DoubleQuote);
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::DoubleQuote);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"value")));
+        assert_eq!(lexer.next_token(), Token::DoubleQuote);
+        assert_eq!(lexer.next_token(), Token::RBrace);
     }
 }
