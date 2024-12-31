@@ -5,7 +5,7 @@ struct TokenLiteral<'a>(&'a [u8]);
 enum Token<'a> {
     Illegal,
     Eof,
-    // Types
+    // Values
     String(TokenLiteral<'a>),
     Number(TokenLiteral<'a>),
     True,
@@ -109,11 +109,6 @@ impl<'a> Lexer<'a> {
             Some(b'}') => Token::RBrace,
             Some(b'[') => Token::LBracket,
             Some(b']') => Token::RBracket,
-            Some(b'"') => {
-                let str = self.read_string();
-
-                Token::String(TokenLiteral(str))
-            }
             Some(b':') => Token::Colon,
             Some(b',') => Token::Comma,
             Some(other) if other.is_ascii_alphabetic() => {
@@ -130,6 +125,11 @@ impl<'a> Lexer<'a> {
                 let num = self.read_number();
 
                 return Token::Number(TokenLiteral(num));
+            }
+            Some(b'"') => {
+                let str = self.read_string();
+
+                Token::String(TokenLiteral(str))
             }
             _ if self.read_position > self.input.len() => Token::Eof,
             _ => Token::Illegal,
@@ -201,5 +201,70 @@ mod tests {
         assert_eq!(lexer.next_token(), Token::Comma);
         assert_eq!(lexer.next_token(), Token::True);
         assert_eq!(lexer.next_token(), Token::RBracket);
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"nested_object"))
+        );
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::LBrace);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"nested_string"))
+        );
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"This is a nested string"))
+        );
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"nested_number"))
+        );
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"100")));
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"nested_array"))
+        );
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::LBracket);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"10")));
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"20")));
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"30")));
+        assert_eq!(lexer.next_token(), Token::RBracket);
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"nested_boolean"))
+        );
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::False);
+        assert_eq!(lexer.next_token(), Token::RBrace);
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"another_nested_object"))
+        );
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::LBrace);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"level1")));
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::LBrace);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"level2")));
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::LBrace);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"key")));
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"value")));
+        assert_eq!(lexer.next_token(), Token::RBrace);
+        assert_eq!(lexer.next_token(), Token::RBrace);
+        assert_eq!(lexer.next_token(), Token::RBrace);
+        assert_eq!(lexer.next_token(), Token::RBrace);
+        assert_eq!(lexer.next_token(), Token::Eof);
     }
 }
