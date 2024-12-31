@@ -53,6 +53,14 @@ impl<'a> Lexer<'a> {
         self.read_position += 1;
     }
 
+    fn peek_char(&self) -> Option<u8> {
+        if self.read_position >= self.input.len() {
+            None
+        } else {
+            Some(self.input[self.read_position])
+        }
+    }
+
     fn skip_whitespace(&mut self) {
         while matches!(self.ch, Some(b' ' | b'\t' | b'\n' | b'\r')) {
             self.read_char();
@@ -93,9 +101,11 @@ impl<'a> Lexer<'a> {
         loop {
             self.read_char();
 
-            if self.ch == Some(b'"') || self.ch.is_none() {
-                break;
-            }
+            match self.ch {
+                Some(b'"') | None => break,
+                Some(b'\\') if self.peek_char() == Some(b'"') => self.read_char(),
+                _ => continue,
+            };
         }
 
         &self.input[start_pos..self.position]
@@ -286,6 +296,25 @@ mod tests {
             tok!('}'),
             tok!('}'),
             tok!(Eof),
+        ];
+
+        for tok in expected_tokens {
+            assert_eq!(lexer.next_token(), tok);
+        }
+    }
+
+    #[test]
+    fn parse_escaped() {
+        let json = r#"{"key":"Hello, \"world!\""}"#;
+
+        let mut lexer = Lexer::new(json.as_bytes());
+
+        let expected_tokens = [
+            tok!('{'),
+            tok_str!("key"),
+            tok!(':'),
+            tok_str!(r#"Hello, \"world!\""#),
+            tok!('}'),
         ];
 
         for tok in expected_tokens {
