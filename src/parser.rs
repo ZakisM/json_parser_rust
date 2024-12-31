@@ -8,26 +8,30 @@ enum Token<'a> {
     // Types
     String(TokenLiteral<'a>),
     Number(TokenLiteral<'a>),
+    True,
+    False,
+    Null,
     // Delimiters
     LBrace,
     RBrace,
-    DoubleQuote,
+    LBracket,
+    RBracket,
     Colon,
     Comma,
 }
 
 #[derive(Debug)]
-struct Lexer {
-    input: Vec<u8>,
+struct Lexer<'a> {
+    input: &'a [u8],
     position: usize,
     read_position: usize,
     ch: Option<u8>,
 }
 
-impl Lexer {
-    pub fn new(input: String) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(input: &'a [u8]) -> Self {
         let mut lexer = Self {
-            input: input.into_bytes(),
+            input,
             position: 0,
             read_position: 0,
             ch: None,
@@ -50,12 +54,12 @@ impl Lexer {
     }
 
     fn skip_whitespace(&mut self) {
-        while matches!(self.ch, Some(b' ' | b'\n' | b'\r')) {
+        while matches!(self.ch, Some(b' ' | b'\t' | b'\n' | b'\r')) {
             self.read_char();
         }
     }
 
-    fn read_string(&mut self) -> &[u8] {
+    fn read_ident(&mut self) -> &'a [u8] {
         let start_pos = self.position;
 
         while let Some(c) = self.ch {
@@ -69,7 +73,7 @@ impl Lexer {
         &self.input[start_pos..self.position]
     }
 
-    fn read_number(&mut self) -> &[u8] {
+    fn read_number(&mut self) -> &'a [u8] {
         let start_pos = self.position;
 
         while let Some(c) = self.ch {
@@ -83,24 +87,49 @@ impl Lexer {
         &self.input[start_pos..self.position]
     }
 
-    fn next_token(&mut self) -> Token {
+    fn read_string(&mut self) -> &'a [u8] {
+        let start_pos = self.position + 1;
+
+        loop {
+            self.read_char();
+
+            if self.ch == Some(b'"') || self.ch.is_none() {
+                break;
+            }
+        }
+
+        &self.input[start_pos..self.position]
+    }
+
+    fn next_token(&mut self) -> Token<'a> {
         self.skip_whitespace();
 
         let token = match self.ch {
             Some(b'{') => Token::LBrace,
             Some(b'}') => Token::RBrace,
-            Some(b'"') => Token::DoubleQuote,
+            Some(b'[') => Token::LBracket,
+            Some(b']') => Token::RBracket,
+            Some(b'"') => {
+                let str = self.read_string();
+
+                Token::String(TokenLiteral(str))
+            }
             Some(b':') => Token::Colon,
             Some(b',') => Token::Comma,
             Some(other) if other.is_ascii_alphabetic() => {
-                let s = self.read_string();
+                let ident = self.read_ident();
 
-                return Token::String(TokenLiteral(s));
+                return match ident {
+                    b"true" => Token::True,
+                    b"false" => Token::False,
+                    b"null" => Token::Null,
+                    _ => Token::Illegal,
+                };
             }
             Some(other) if other.is_ascii_digit() => {
-                let s = self.read_number();
+                let num = self.read_number();
 
-                return Token::Number(TokenLiteral(s));
+                return Token::Number(TokenLiteral(num));
             }
             _ if self.read_position > self.input.len() => Token::Eof,
             _ => Token::Illegal,
@@ -118,16 +147,59 @@ mod tests {
 
     #[test]
     fn parse_simple() {
-        let json = r#"{"key": 4}"#;
+        let json = r#"
+{
+	"string": "Hello, world!",
+	"number": 42,
+	"boolean": true,
+	"null": null,
+	"array": [1, 2, 3, 4, "five", true],
+	"nested_object": {
+		"nested_string": "This is a nested string",
+		"nested_number": 100,
+		"nested_array": [10, 20, 30],
+		"nested_boolean": false
+	},
+	"another_nested_object": { "level1": { "level2": { "key": "value" } } }
+}
+"#;
 
-        let mut lexer = Lexer::new(json.to_owned());
+        let mut lexer = Lexer::new(json.as_bytes());
 
         assert_eq!(lexer.next_token(), Token::LBrace);
-        assert_eq!(lexer.next_token(), Token::DoubleQuote);
-        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"key")));
-        assert_eq!(lexer.next_token(), Token::DoubleQuote);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"string")));
         assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(
+            lexer.next_token(),
+            Token::String(TokenLiteral(b"Hello, world!"))
+        );
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"number")));
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"42")));
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"boolean")));
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::True);
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"null")));
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::Null);
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"array")));
+        assert_eq!(lexer.next_token(), Token::Colon);
+        assert_eq!(lexer.next_token(), Token::LBracket);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"1")));
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"2")));
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"3")));
+        assert_eq!(lexer.next_token(), Token::Comma);
         assert_eq!(lexer.next_token(), Token::Number(TokenLiteral(b"4")));
-        assert_eq!(lexer.next_token(), Token::RBrace);
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::String(TokenLiteral(b"five")));
+        assert_eq!(lexer.next_token(), Token::Comma);
+        assert_eq!(lexer.next_token(), Token::True);
+        assert_eq!(lexer.next_token(), Token::RBracket);
     }
 }
