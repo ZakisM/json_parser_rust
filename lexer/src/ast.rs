@@ -34,30 +34,22 @@ fn to_flattened(root: &JsonValue, prefix: Option<String>) -> HashMap<String, Str
 
     match root {
         JsonValue::Object(entries) => {
-            let mut all_nested = HashMap::new();
-
             for item in entries {
                 let key = prefix
                     .as_ref()
                     .map_or_else(|| item.key.to_owned(), |pre| format!("{pre}.{}", item.key));
 
-                all_nested.extend(to_flattened(&item.value, Some(key)));
+                res.extend(to_flattened(&item.value, Some(key)));
             }
-
-            res.extend(all_nested);
         }
         JsonValue::Array(array) => {
             let prefix = prefix.expect("prefix must be present here");
 
-            let mut all_nested = HashMap::new();
-
             for (index, item) in array.iter().enumerate() {
                 let key = format!("{prefix}.{:03}", index);
 
-                all_nested.extend(to_flattened(item, Some(key)));
+                res.extend(to_flattened(item, Some(key)));
             }
-
-            res.extend(all_nested);
         }
         _ => {
             let prefix = prefix.expect("prefix must be present here");
