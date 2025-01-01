@@ -16,39 +16,55 @@ pub enum JsonValue<'a> {
     Object(Vec<JsonItem<'a>>),
 }
 
+impl<'a> JsonValue<'a> {
+    fn inner_value(&self) -> String {
+        match self {
+            JsonValue::Null => "null".to_owned(),
+            JsonValue::Boolean(b) => b.to_string(),
+            JsonValue::Number(n) => n.to_string(),
+            JsonValue::String(s) => String::from_utf8_lossy(s).into_owned(),
+            JsonValue::Array(_) => "Array".to_string(),
+            JsonValue::Object(_) => "Object".to_string(),
+        }
+    }
+}
+
 fn to_flattened(root: &JsonValue, prefix: Option<String>) -> HashMap<String, String> {
     let mut res = HashMap::new();
 
     match root {
-        JsonValue::Object(items) => {
-            for item in items {
-                let mut key = item.key.to_owned();
-                if let Some(prefix) = &prefix {
-                    key.push('.');
-                    key.push_str(prefix);
-                }
+        JsonValue::Object(entries) => {
+            for item in entries {
+                let key = prefix
+                    .as_ref()
+                    .map_or_else(|| item.key.to_owned(), |pre| format!("{pre}.{}", item.key));
+
                 let value = &item.value;
 
                 match value {
-                    JsonValue::Null => {
-                        res.insert(key, "null".to_owned());
+                    JsonValue::Array(array) => {
+                        for (index, arr_item) in array.iter().enumerate() {
+                            match arr_item {
+                                JsonValue::Array(vec) => todo!(),
+                                JsonValue::Object(vec) => todo!(),
+                                _ => {
+                                    res.insert(
+                                        format!("{key}.{:03}", index),
+                                        arr_item.inner_value(),
+                                    );
+                                }
+                            }
+                        }
                     }
-                    JsonValue::Boolean(b) => {
-                        res.insert(key, b.to_string());
-                    }
-                    JsonValue::Number(n) => {
-                        res.insert(key, n.to_string());
-                    }
-                    JsonValue::String(s) => {
-                        res.insert(key, String::from_utf8_lossy(s).into_owned());
-                    }
-                    JsonValue::Array(vec) => todo!(),
                     JsonValue::Object(vec) => {
                         let nested = to_flattened(value, Some(key));
 
                         res.extend(nested);
 
                         return res;
+                    }
+                    _ => {
+                        res.insert(key, value.inner_value());
                     }
                 };
             }
@@ -82,17 +98,17 @@ mod tests {
                 key: "null",
                 value: JsonValue::Null,
             },
-            // JsonItem {
-            //     key: "array",
-            //     value: JsonValue::Array(vec![
-            //         JsonValue::Number(1),
-            //         JsonValue::Number(2),
-            //         JsonValue::Number(3),
-            //         JsonValue::Number(4),
-            //         JsonValue::String(b"five"),
-            //         JsonValue::Boolean(true),
-            //     ]),
-            // },
+            JsonItem {
+                key: "array",
+                value: JsonValue::Array(vec![
+                    JsonValue::Number(1),
+                    JsonValue::Number(2),
+                    JsonValue::Number(3),
+                    JsonValue::Number(4),
+                    JsonValue::String(b"five"),
+                    JsonValue::Boolean(true),
+                ]),
+            },
             JsonItem {
                 key: "anotherNestedObject",
                 value: JsonValue::Object(vec![JsonItem {
