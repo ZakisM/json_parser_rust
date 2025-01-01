@@ -1,3 +1,5 @@
+mod ast;
+
 #[derive(Debug, PartialEq, Eq)]
 struct TokenLiteral<'a>(&'a [u8]);
 
