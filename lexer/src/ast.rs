@@ -12,8 +12,8 @@ pub enum JsonValue<'a> {
     Boolean(bool),
     Number(usize),
     String(&'a [u8]),
-    Array(Vec<JsonValue<'a>>),
     Object(Vec<JsonItem<'a>>),
+    Array(Vec<JsonValue<'a>>),
 }
 
 impl<'a> JsonValue<'a> {
@@ -34,43 +34,37 @@ fn to_flattened(root: &JsonValue, prefix: Option<String>) -> HashMap<String, Str
 
     match root {
         JsonValue::Object(entries) => {
+            let mut all_nested = HashMap::new();
+
             for item in entries {
                 let key = prefix
                     .as_ref()
                     .map_or_else(|| item.key.to_owned(), |pre| format!("{pre}.{}", item.key));
 
-                let value = &item.value;
-
-                match value {
-                    JsonValue::Array(array) => {
-                        for (index, arr_item) in array.iter().enumerate() {
-                            match arr_item {
-                                JsonValue::Array(vec) => todo!(),
-                                JsonValue::Object(vec) => todo!(),
-                                _ => {
-                                    res.insert(
-                                        format!("{key}.{:03}", index),
-                                        arr_item.inner_value(),
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    JsonValue::Object(vec) => {
-                        let nested = to_flattened(value, Some(key));
-
-                        res.extend(nested);
-
-                        return res;
-                    }
-                    _ => {
-                        res.insert(key, value.inner_value());
-                    }
-                };
+                all_nested.extend(to_flattened(&item.value, Some(key)));
             }
+
+            res.extend(all_nested);
         }
-        _ => panic!("must be called with a JsonValue::Object"),
-    };
+        JsonValue::Array(array) => {
+            let prefix = prefix.expect("prefix must be present here");
+
+            let mut all_nested = HashMap::new();
+
+            for (index, item) in array.iter().enumerate() {
+                let key = format!("{prefix}.{:03}", index);
+
+                all_nested.extend(to_flattened(item, Some(key)));
+            }
+
+            res.extend(all_nested);
+        }
+        _ => {
+            let prefix = prefix.expect("prefix must be present here");
+
+            res.insert(prefix, root.inner_value());
+        }
+    }
 
     res
 }
@@ -107,6 +101,7 @@ mod tests {
                     JsonValue::Number(4),
                     JsonValue::String(b"five"),
                     JsonValue::Boolean(true),
+                    JsonValue::Array(vec![JsonValue::Number(7)]),
                 ]),
             },
             JsonItem {
