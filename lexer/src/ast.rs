@@ -94,6 +94,10 @@ mod tests {
                     JsonValue::String(b"five"),
                     JsonValue::Boolean(true),
                     JsonValue::Array(vec![JsonValue::Number(7)]),
+                    JsonValue::Object(vec![JsonItem {
+                        key: "nestedArray",
+                        value: JsonValue::Boolean(false),
+                    }]),
                 ]),
             },
             JsonItem {
