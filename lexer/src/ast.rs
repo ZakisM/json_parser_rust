@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct JsonItem<'a> {
@@ -29,8 +29,8 @@ impl<'a> JsonValue<'a> {
     }
 }
 
-fn to_flattened(root: &JsonValue, prefix: Option<String>) -> HashMap<String, String> {
-    let mut res = HashMap::new();
+fn to_flattened(root: &JsonValue, prefix: Option<String>) -> BTreeMap<String, String> {
+    let mut res = BTreeMap::new();
 
     match root {
         JsonValue::Object(entries) => {
@@ -43,7 +43,7 @@ fn to_flattened(root: &JsonValue, prefix: Option<String>) -> HashMap<String, Str
             }
         }
         JsonValue::Array(array) => {
-            let prefix = prefix.expect("prefix must be present here");
+            let prefix = prefix.expect("prefix must be present");
 
             for (index, item) in array.iter().enumerate() {
                 let key = format!("{prefix}.{:03}", index);
@@ -52,7 +52,7 @@ fn to_flattened(root: &JsonValue, prefix: Option<String>) -> HashMap<String, Str
             }
         }
         _ => {
-            let prefix = prefix.expect("prefix must be present here");
+            let prefix = prefix.expect("prefix must be present");
 
             res.insert(prefix, root.inner_value());
         }
@@ -69,46 +69,92 @@ mod tests {
     fn flattened() {
         let root = JsonValue::Object(vec![
             JsonItem {
-                key: "string",
-                value: JsonValue::String(b"Hello, world!"),
+                key: "name",
+                value: JsonValue::String(b"John"),
             },
             JsonItem {
-                key: "number",
-                value: JsonValue::Number(42),
+                key: "age",
+                value: JsonValue::Number(30),
             },
             JsonItem {
-                key: "boolean",
-                value: JsonValue::Boolean(true),
+                key: "isStudent",
+                value: JsonValue::Boolean(false),
             },
             JsonItem {
-                key: "null",
-                value: JsonValue::Null,
-            },
-            JsonItem {
-                key: "array",
-                value: JsonValue::Array(vec![
-                    JsonValue::Number(1),
-                    JsonValue::Number(2),
-                    JsonValue::Number(3),
-                    JsonValue::Number(4),
-                    JsonValue::String(b"five"),
-                    JsonValue::Boolean(true),
-                    JsonValue::Array(vec![JsonValue::Number(7)]),
-                    JsonValue::Object(vec![JsonItem {
-                        key: "nestedArray",
-                        value: JsonValue::Boolean(false),
-                    }]),
+                key: "address",
+                value: JsonValue::Object(vec![
+                    JsonItem {
+                        key: "street",
+                        value: JsonValue::String(b"123 Main St"),
+                    },
+                    JsonItem {
+                        key: "city",
+                        value: JsonValue::String(b"New York"),
+                    },
+                    JsonItem {
+                        key: "zipcode",
+                        value: JsonValue::Null,
+                    },
                 ]),
             },
             JsonItem {
-                key: "anotherNestedObject",
-                value: JsonValue::Object(vec![JsonItem {
-                    key: "level1",
-                    value: JsonValue::Object(vec![JsonItem {
-                        key: "key",
-                        value: JsonValue::String(b"value"),
-                    }]),
-                }]),
+                key: "courses",
+                value: JsonValue::Array(vec![
+                    JsonValue::Object(vec![
+                        JsonItem {
+                            key: "courseName",
+                            value: JsonValue::String(b"Math"),
+                        },
+                        JsonItem {
+                            key: "grade",
+                            value: JsonValue::String(b"A"),
+                        },
+                    ]),
+                    JsonValue::Object(vec![
+                        JsonItem {
+                            key: "courseName",
+                            value: JsonValue::String(b"Science"),
+                        },
+                        JsonItem {
+                            key: "grade",
+                            value: JsonValue::String(b"B"),
+                        },
+                    ]),
+                ]),
+            },
+            JsonItem {
+                key: "preferences",
+                value: JsonValue::Object(vec![
+                    JsonItem {
+                        key: "notifications",
+                        value: JsonValue::Boolean(true),
+                    },
+                    JsonItem {
+                        key: "theme",
+                        value: JsonValue::String(b"dark"),
+                    },
+                ]),
+            },
+            JsonItem {
+                key: "scores",
+                value: JsonValue::Array(vec![
+                    JsonValue::Number(95),
+                    JsonValue::Number(88),
+                    JsonValue::Number(76),
+                ]),
+            },
+            JsonItem {
+                key: "metadata",
+                value: JsonValue::Object(vec![
+                    JsonItem {
+                        key: "createdAt",
+                        value: JsonValue::String(b"2023-10-01T12:34:56Z"),
+                    },
+                    JsonItem {
+                        key: "updatedAt",
+                        value: JsonValue::String(b"2023-10-01T12:34:56Z"),
+                    },
+                ]),
             },
         ]);
 
