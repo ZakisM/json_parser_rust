@@ -1,6 +1,5 @@
 use wide::WideString;
 
-mod parser;
 mod wide;
 
 // SAFETY: Not safe

@@ -1,7 +1,16 @@
+[workspace]
+members = ["lexer"]
+
 [package]
 name = "json_parser_rust"
 version = "0.1.0"
 edition = "2021"
+
+[build]
+target = "x86_64-pc-windows-msvc"
+
+[dependencies]
+lexer = { path = "./lexer" }
 
 [lib]
 crate-type = ["cdylib"]
