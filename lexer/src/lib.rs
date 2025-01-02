@@ -1,9 +1,10 @@
 mod ast;
+mod parser;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct TokenLiteral<'a>(&'a [u8]);
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Token<'a> {
     Illegal,
     Eof,
