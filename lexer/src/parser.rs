@@ -1,4 +1,7 @@
-use crate::{ast::JsonValue, Lexer, Token};
+use crate::{
+    ast::{JsonItem, JsonValue},
+    Lexer, Token,
+};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -9,11 +12,10 @@ pub struct Parser<'a> {
 
 macro_rules! expect_token {
     ($self:expr, $variant:ident) => {
-        std::mem::discriminant(&$self.peek_token) == std::mem::discriminant(&Token::$variant)
+        $self.expect_peek(&Token::$variant)
     };
     ($self:expr, $variant:ident()) => {
-        std::mem::discriminant(&$self.peek_token)
-            == std::mem::discriminant(&Token::$variant(Default::default()))
+        $self.expect_peek(&Token::$variant(Default::default()))
     };
 }
 
@@ -36,23 +38,44 @@ impl<'a> Parser<'a> {
         self.peek_token = self.lexer.next_token();
     }
 
-    fn parse_item(&mut self) {
+    fn expect_peek(&mut self, expected: &Token<'_>) -> bool {
+        if std::mem::discriminant(&self.peek_token) == std::mem::discriminant(expected) {
+            self.next_token();
+
+            return true;
+        }
+
+        false
+    }
+
+    fn parse_item(&mut self) -> Option<JsonItem<'a>> {
         match self.current_token {
             Token::LBrace => {
                 if !expect_token!(self, String()) {
-                    return;
+                    return None;
                 }
 
                 let key = self.current_token;
+                dbg!(&key);
+
+                if !expect_token!(self, Colon) {
+                    return None;
+                }
             }
-            _ => todo!(),
+            _ => return None,
         };
+
+        None
     }
 
     fn parse(mut self) -> JsonValue<'a> {
         let mut items = Vec::new();
 
         while self.current_token != Token::Eof {
+            if let Some(item) = self.parse_item() {
+                items.push(item);
+            }
+
             self.next_token();
         }
 
@@ -69,22 +92,21 @@ mod tests {
         let json = r#"
 {
 	"string": "Hello, world!",
-	"number": 42,
-	"boolean": true,
-	"null": null,
-	"array": [1, 2, 3, 4, "five", true],
-	"nested_object": {
-		"nested_string": "This is a nested string",
-		"nested_number": 100,
-		"nested_array": [10, 20, 30],
-		"nested_boolean": false
-	},
-	"another_nested_object": { "level1": { "level2": { "key": "value" } } }
-}
+    "number": 42,                                                      
+    "boolean": true,                                                       
+    "null": null,                                                          
+    "array": [1, 2, 3, 4, "five", true],                                   
+    "nested_object": {                                                     
+        "nested_string": "This is a nested string",                    
+        "nested_number": 100,                                          
+        "nested_array": [10, 20, 30],                                  
+        "nested_boolean": false                                        
+    },                                                                     
+    "another_nested_object": { "level1": { "level2": { "key": "value" } } }
 "#;
 
         let parser = Parser::new(json.as_bytes());
 
-        dbg!(&parser);
+        dbg!(&parser.parse());
     }
 }
