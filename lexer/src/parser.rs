@@ -1,6 +1,6 @@
 use crate::{
     ast::{JsonItem, JsonValue},
-    Lexer, Token,
+    Lexer, Token, TokenLiteral,
 };
 
 #[derive(Debug)]
@@ -48,31 +48,72 @@ impl<'a> Parser<'a> {
         false
     }
 
+    fn parse_string(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
+        let s = std::str::from_utf8(literal.0).unwrap();
+
+        let value = JsonValue::String(s);
+
+        Some(value)
+    }
+
+    fn parse_number(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
+        let s = std::str::from_utf8(literal.0).unwrap();
+        let n = s.parse::<usize>().unwrap();
+
+        let value = JsonValue::Number(n);
+
+        Some(value)
+    }
+
     fn parse_item(&mut self) -> Option<JsonItem<'a>> {
+        let Token::String(key) = self.peek_token else {
+            return None;
+        };
+        self.next_token();
+
+        let Token::Colon = self.peek_token else {
+            return None;
+        };
+        self.next_token();
+
         match self.current_token {
-            Token::LBrace => {
-                if !expect_token!(self, String()) {
-                    return None;
-                }
-
-                let key = self.current_token;
-                dbg!(&key);
-
-                if !expect_token!(self, Colon) {
-                    return None;
-                }
-            }
-            _ => return None,
+            Token::String(token_literal) => self.parse_string(token_literal)?,
+            Token::Number(token_literal) => self.parse_number(token_literal)?,
+            Token::True => JsonValue::Boolean(true),
+            Token::False => JsonValue::Boolean(false),
+            Token::Null => JsonValue::Null,
+            Token::LBrace => todo!(),
+            Token::RBrace => todo!(),
+            Token::LBracket => todo!(),
+            Token::RBracket => todo!(),
+            Token::Colon => todo!(),
+            Token::Comma => todo!(),
+            _ => panic!("unhandled"),
         };
 
         None
+    }
+
+    fn parse_object(&mut self) -> Option<JsonItem<'a>> {
+        match self.current_token {
+            Token::LBrace => {
+                let Token::String(_) = self.peek_token else {
+                    return None;
+                };
+
+                let item = self.parse_item()?;
+
+                Some(item)
+            }
+            _ => None,
+        }
     }
 
     fn parse(mut self) -> JsonValue<'a> {
         let mut items = Vec::new();
 
         while self.current_token != Token::Eof {
-            if let Some(item) = self.parse_item() {
+            if let Some(item) = self.parse_object() {
                 items.push(item);
             }
 
@@ -92,17 +133,9 @@ mod tests {
         let json = r#"
 {
 	"string": "Hello, world!",
-    "number": 42,                                                      
-    "boolean": true,                                                       
-    "null": null,                                                          
-    "array": [1, 2, 3, 4, "five", true],                                   
-    "nested_object": {                                                     
-        "nested_string": "This is a nested string",                    
-        "nested_number": 100,                                          
-        "nested_array": [10, 20, 30],                                  
-        "nested_boolean": false                                        
-    },                                                                     
-    "another_nested_object": { "level1": { "level2": { "key": "value" } } }
+	"number": 42,
+	"boolean": true,
+}
 "#;
 
         let parser = Parser::new(json.as_bytes());

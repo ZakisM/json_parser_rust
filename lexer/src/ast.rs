@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct JsonItem<'a> {
-    key: &'a str,
-    value: JsonValue<'a>,
+    pub key: &'a str,
+    pub value: JsonValue<'a>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -11,7 +11,7 @@ pub enum JsonValue<'a> {
     Null,
     Boolean(bool),
     Number(usize),
-    String(&'a [u8]),
+    String(&'a str),
     Object(Vec<JsonItem<'a>>),
     Array(Vec<JsonValue<'a>>),
 }
@@ -22,7 +22,7 @@ impl<'a> JsonValue<'a> {
             JsonValue::Null => "null".to_owned(),
             JsonValue::Boolean(b) => b.to_string(),
             JsonValue::Number(n) => n.to_string(),
-            JsonValue::String(s) => String::from_utf8_lossy(s).into_owned(),
+            JsonValue::String(s) => s.to_string(),
             JsonValue::Array(_) => "Array".to_string(),
             JsonValue::Object(_) => "Object".to_string(),
         }
@@ -70,7 +70,7 @@ mod tests {
         let root = JsonValue::Object(vec![
             JsonItem {
                 key: "name",
-                value: JsonValue::String(b"John"),
+                value: JsonValue::String("John"),
             },
             JsonItem {
                 key: "age",
@@ -85,11 +85,11 @@ mod tests {
                 value: JsonValue::Object(vec![
                     JsonItem {
                         key: "street",
-                        value: JsonValue::String(b"123 Main St"),
+                        value: JsonValue::String("123 Main St"),
                     },
                     JsonItem {
                         key: "city",
-                        value: JsonValue::String(b"New York"),
+                        value: JsonValue::String("New York"),
                     },
                     JsonItem {
                         key: "zipcode",
@@ -103,21 +103,21 @@ mod tests {
                     JsonValue::Object(vec![
                         JsonItem {
                             key: "courseName",
-                            value: JsonValue::String(b"Math"),
+                            value: JsonValue::String("Math"),
                         },
                         JsonItem {
                             key: "grade",
-                            value: JsonValue::String(b"A"),
+                            value: JsonValue::String("A"),
                         },
                     ]),
                     JsonValue::Object(vec![
                         JsonItem {
                             key: "courseName",
-                            value: JsonValue::String(b"Science"),
+                            value: JsonValue::String("Science"),
                         },
                         JsonItem {
                             key: "grade",
-                            value: JsonValue::String(b"B"),
+                            value: JsonValue::String("B"),
                         },
                     ]),
                 ]),
@@ -131,7 +131,7 @@ mod tests {
                     },
                     JsonItem {
                         key: "theme",
-                        value: JsonValue::String(b"dark"),
+                        value: JsonValue::String("dark"),
                     },
                 ]),
             },
@@ -148,11 +148,11 @@ mod tests {
                 value: JsonValue::Object(vec![
                     JsonItem {
                         key: "createdAt",
-                        value: JsonValue::String(b"2023-10-01T12:34:56Z"),
+                        value: JsonValue::String("2023-10-01T12:34:56Z"),
                     },
                     JsonItem {
                         key: "updatedAt",
-                        value: JsonValue::String(b"2023-10-01T12:34:56Z"),
+                        value: JsonValue::String("2023-10-01T12:34:56Z"),
                     },
                 ]),
             },
