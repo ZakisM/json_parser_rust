@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
         false
     }
 
-    fn parse_string(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
+    fn parse_val_string(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
         let s = std::str::from_utf8(literal.0).unwrap();
 
         let value = JsonValue::String(s);
@@ -56,7 +56,7 @@ impl<'a> Parser<'a> {
         Some(value)
     }
 
-    fn parse_number(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
+    fn parse_val_number(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
         let s = std::str::from_utf8(literal.0).unwrap();
         let n = s.parse::<usize>().unwrap();
 
@@ -65,58 +65,60 @@ impl<'a> Parser<'a> {
         Some(value)
     }
 
-    fn parse_item(&mut self) -> Option<JsonItem<'a>> {
-        let Token::String(key) = self.peek_token else {
-            return None;
-        };
-        self.next_token();
-
-        let Token::Colon = self.peek_token else {
-            return None;
-        };
-        self.next_token();
-
-        match self.current_token {
-            Token::String(token_literal) => self.parse_string(token_literal)?,
-            Token::Number(token_literal) => self.parse_number(token_literal)?,
-            Token::True => JsonValue::Boolean(true),
-            Token::False => JsonValue::Boolean(false),
-            Token::Null => JsonValue::Null,
-            Token::LBrace => todo!(),
-            Token::RBrace => todo!(),
-            Token::LBracket => todo!(),
-            Token::RBracket => todo!(),
-            Token::Colon => todo!(),
-            Token::Comma => todo!(),
-            _ => panic!("unhandled"),
-        };
-
-        None
-    }
-
-    fn parse_object(&mut self) -> Option<JsonItem<'a>> {
-        match self.current_token {
-            Token::LBrace => {
-                let Token::String(_) = self.peek_token else {
-                    return None;
-                };
-
-                let item = self.parse_item()?;
-
-                Some(item)
-            }
-            _ => None,
-        }
-    }
-
-    fn parse(mut self) -> JsonValue<'a> {
+    fn parse_object(&mut self) -> JsonValue<'a> {
         let mut items = Vec::new();
 
+        let Token::LBrace = self.current_token else {
+            panic!("must start with LBrace");
+        };
+
         while self.current_token != Token::Eof {
-            if let Some(item) = self.parse_object() {
-                items.push(item);
+            if self.peek_token == Token::RBrace {
+                break;
             }
 
+            // Parse an item
+            let Token::String(key) = self.peek_token else {
+                panic!("expected string, found {:?}", self.peek_token);
+            };
+            self.next_token();
+
+            let Token::Colon = self.peek_token else {
+                panic!("expected colon, found {:?}", self.peek_token);
+            };
+            self.next_token();
+
+            let value = match self.peek_token {
+                Token::String(token_literal) => self
+                    .parse_val_string(token_literal)
+                    .expect("expected JsonString"),
+                Token::Number(token_literal) => self
+                    .parse_val_number(token_literal)
+                    .expect("expected JsonNumber"),
+                Token::True => JsonValue::Boolean(true),
+                Token::False => JsonValue::Boolean(false),
+                Token::Null => JsonValue::Null,
+                Token::LBrace => {
+                    self.next_token();
+                    self.parse_object()
+                }
+                Token::RBrace => todo!(),
+                Token::LBracket => todo!(),
+                Token::RBracket => todo!(),
+                Token::Colon => todo!(),
+                Token::Comma => todo!(),
+                _ => panic!("todoooo"),
+            };
+            self.next_token();
+
+            items.push(JsonItem {
+                key: std::str::from_utf8(key.0).unwrap(),
+                value,
+            });
+
+            let Token::Comma = self.peek_token else {
+                panic!("expected comma");
+            };
             self.next_token();
         }
 
@@ -135,11 +137,19 @@ mod tests {
 	"string": "Hello, world!",
 	"number": 42,
 	"boolean": true,
+	"nested_object": {
+		"nested_string": "This is a nested string",
+		"nested_number": 100,
+		"nested_2_number": {
+    		"nested_2_string": "This is a 2 nested string",
+    		"nested_2_number": 200,
+		},
+	},
 }
 "#;
 
-        let parser = Parser::new(json.as_bytes());
+        let mut parser = Parser::new(json.as_bytes());
 
-        dbg!(&parser.parse());
+        dbg!(&parser.parse_object());
     }
 }
