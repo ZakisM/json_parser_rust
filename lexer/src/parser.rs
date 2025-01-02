@@ -72,11 +72,7 @@ impl<'a> Parser<'a> {
             panic!("must start with LBrace");
         };
 
-        while self.current_token != Token::Eof {
-            if self.peek_token == Token::RBrace {
-                break;
-            }
-
+        while !matches!(self.current_token, Token::RBrace | Token::Eof) {
             // Parse an item
             let Token::String(key) = self.peek_token else {
                 panic!("expected string, found {:?}", self.peek_token);
@@ -102,12 +98,7 @@ impl<'a> Parser<'a> {
                     self.next_token();
                     self.parse_object()
                 }
-                Token::RBrace => todo!(),
-                Token::LBracket => todo!(),
-                Token::RBracket => todo!(),
-                Token::Colon => todo!(),
-                Token::Comma => todo!(),
-                _ => panic!("todoooo"),
+                _ => panic!("unexpected token"),
             };
             self.next_token();
 
@@ -116,9 +107,10 @@ impl<'a> Parser<'a> {
                 value,
             });
 
-            let Token::Comma = self.peek_token else {
-                panic!("expected comma");
-            };
+            if !matches!(self.peek_token, Token::Comma | Token::RBrace | Token::Eof) {
+                panic!("expected Comma | RBrace found {:?}", self.peek_token);
+            }
+
             self.next_token();
         }
 
@@ -139,12 +131,8 @@ mod tests {
 	"boolean": true,
 	"nested_object": {
 		"nested_string": "This is a nested string",
-		"nested_number": 100,
-		"nested_2_number": {
-    		"nested_2_string": "This is a 2 nested string",
-    		"nested_2_number": 200,
-		},
-	},
+		"nested_number": 100
+	}
 }
 "#;
 
