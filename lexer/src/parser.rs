@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::{
     ast::{JsonProperty, JsonValue},
     error::ExpectedTokenError,
@@ -193,12 +191,14 @@ mod tests {
 		"nested_string": "This is a nested string",
 		"nested_number": [100, 200, 300, [400, 500, [600, [700, {"secret": 12345}]]]]
 	},
-	"boolean": true
+	"boolean": tue
 }
 "#;
 
         let parser = Parser::new(json.as_bytes());
 
-        dbg!(&parser.parse());
+        if let Err(e) = parser.parse() {
+            println!("{}", e);
+        }
     }
 }

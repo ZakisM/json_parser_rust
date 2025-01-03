@@ -37,23 +37,23 @@ pub enum Token<'a> {
 impl std::fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value = match self {
-            Token::String(literal) if literal.0.is_empty() => "String",
-            Token::Number(literal) if literal.0.is_empty() => "Number",
+            Token::String(literal) if literal.0.is_empty() => "string",
+            Token::Number(literal) if literal.0.is_empty() => "number",
             Token::String(literal) | Token::Number(literal) => &format!("'{}'", literal),
-            Token::True => "True",
-            Token::False => "False",
-            Token::Null => "Null",
-            Token::LBrace => "LBrace",
-            Token::RBrace => "RBrace",
-            Token::LBracket => "LBracket",
-            Token::RBracket => "RBracket",
-            Token::Colon => "Colon",
-            Token::Comma => "Comma",
+            Token::True => "true",
+            Token::False => "false",
+            Token::Null => "null",
+            Token::LBrace => "{",
+            Token::RBrace => "}",
+            Token::LBracket => "[",
+            Token::RBracket => "]",
+            Token::Colon => ":",
+            Token::Comma => ",",
             Token::Illegal => "Illegal",
             Token::Eof => "Eof",
         };
 
-        write!(f, "{value}")
+        write!(f, "'{value}'")
     }
 }
 
