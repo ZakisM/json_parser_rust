@@ -67,12 +67,57 @@ impl<'a> Parser<'a> {
         Some(value)
     }
 
-    fn parse_object(&mut self) -> JsonValue<'a> {
+    fn parse_val_array(&mut self) -> Option<JsonValue<'a>> {
+        let Token::LBracket = self.current_token else {
+            panic!("must start with LBracket");
+        };
+
         let mut items = Vec::new();
 
+        loop {
+            let value = match self.peek_token {
+                Token::String(token_literal) => self
+                    .parse_val_string(token_literal)
+                    .expect("expected JsonString"),
+                Token::Number(token_literal) => self
+                    .parse_val_number(token_literal)
+                    .expect("expected JsonNumber"),
+                Token::True => JsonValue::Boolean(true),
+                Token::False => JsonValue::Boolean(false),
+                Token::Null => JsonValue::Null,
+                Token::LBrace => {
+                    self.next_token();
+                    self.parse_object()
+                }
+                Token::LBracket => {
+                    self.next_token();
+                    self.parse_val_array().expect("expected JsonArray")
+                }
+                _ => panic!("unexpected token"),
+            };
+            self.next_token();
+
+            items.push(value);
+
+            if self.peek_token == Token::RBracket {
+                break;
+            }
+
+            let Token::Comma = self.peek_token else {
+                panic!("expected comma, found {:?}", self.peek_token);
+            };
+            self.next_token();
+        }
+
+        Some(JsonValue::Array(items))
+    }
+
+    fn parse_object(&mut self) -> JsonValue<'a> {
         let Token::LBrace = self.current_token else {
             panic!("must start with LBrace");
         };
+
+        let mut items = Vec::new();
 
         loop {
             // Parse an item
@@ -99,6 +144,10 @@ impl<'a> Parser<'a> {
                 Token::LBrace => {
                     self.next_token();
                     self.parse_object()
+                }
+                Token::LBracket => {
+                    self.next_token();
+                    self.parse_val_array().expect("expected JsonArray")
                 }
                 _ => panic!("unexpected token"),
             };
@@ -146,7 +195,7 @@ mod tests {
 	"number": 42,
 	"nested_object": {
 		"nested_string": "This is a nested string",
-		"nested_number": 100
+		"nested_number": [100, 200, 300]
 	},
 	"boolean": true
 }
