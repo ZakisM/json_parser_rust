@@ -50,7 +50,7 @@ impl<'a> Parser<'a> {
         false
     }
 
-    fn parse_val_string(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
+    fn parse_string(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
         let s = std::str::from_utf8(literal.0).unwrap();
 
         let value = JsonValue::String(s);
@@ -58,7 +58,7 @@ impl<'a> Parser<'a> {
         Some(value)
     }
 
-    fn parse_val_number(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
+    fn parse_number(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
         let s = std::str::from_utf8(literal.0).unwrap();
         let n = s.parse::<usize>().unwrap();
 
@@ -70,10 +70,10 @@ impl<'a> Parser<'a> {
     fn parse_value(&mut self) -> JsonValue<'a> {
         let value = match self.peek_token {
             Token::String(token_literal) => self
-                .parse_val_string(token_literal)
+                .parse_string(token_literal)
                 .expect("expected JsonString"),
             Token::Number(token_literal) => self
-                .parse_val_number(token_literal)
+                .parse_number(token_literal)
                 .expect("expected JsonNumber"),
             Token::True => JsonValue::Boolean(true),
             Token::False => JsonValue::Boolean(false),
@@ -84,7 +84,7 @@ impl<'a> Parser<'a> {
             }
             Token::LBracket => {
                 self.next_token();
-                self.parse_val_array().expect("expected JsonArray")
+                self.parse_array().expect("expected JsonArray")
             }
             _ => panic!("unexpected token"),
         };
@@ -93,7 +93,7 @@ impl<'a> Parser<'a> {
         value
     }
 
-    fn parse_val_array(&mut self) -> Option<JsonValue<'a>> {
+    fn parse_array(&mut self) -> Option<JsonValue<'a>> {
         let Token::LBracket = self.current_token else {
             panic!("must start with LBracket");
         };
