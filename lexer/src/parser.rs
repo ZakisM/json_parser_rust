@@ -108,8 +108,8 @@ impl<'a> Parser<'a> {
             _ => {
                 return Err(ExpectedTokenError {
                     expected: vec![
-                        Token::String(TokenLiteral(Cow::Borrowed(b"String"))),
-                        Token::Number(TokenLiteral(Cow::Borrowed(b"Number"))),
+                        Token::String(Default::default()),
+                        Token::Number(Default::default()),
                         Token::True,
                         Token::False,
                         Token::Null,
@@ -126,11 +126,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_property(&mut self) -> Result<JsonProperty, ExpectedTokenError> {
-        let key = expect_token!(self, String());
+        let key_token = expect_token!(self, String());
+        let key = String::from_utf8(key_token.0.into_owned()).unwrap();
 
         expect_token!(self, Colon);
 
-        let key = String::from_utf8(key.0.into_owned()).unwrap();
         let value = self.parse_value()?;
 
         Ok(JsonProperty::from((key, value)))

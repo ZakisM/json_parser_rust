@@ -1,21 +1,22 @@
 use std::borrow::Cow;
 
-mod ast;
-mod error;
-mod parser;
+pub mod ast;
+pub mod error;
+pub mod parser;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-struct TokenLiteral<'a>(Cow<'a, [u8]>);
+pub struct TokenLiteral<'a>(Cow<'a, [u8]>);
 
 impl std::fmt::Display for TokenLiteral<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = std::str::from_utf8(&self.0).unwrap_or("Unknown data");
+        let value = std::str::from_utf8(&self.0).unwrap_or("non UTF-8 literal");
+
         write!(f, "{}", value)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Token<'a> {
+pub enum Token<'a> {
     // Values
     String(TokenLiteral<'a>),
     Number(TokenLiteral<'a>),
@@ -31,6 +32,29 @@ enum Token<'a> {
     Comma,
     Illegal,
     Eof,
+}
+
+impl std::fmt::Display for Token<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            Token::String(literal) if literal.0.is_empty() => "String",
+            Token::Number(literal) if literal.0.is_empty() => "Number",
+            Token::String(literal) | Token::Number(literal) => &format!("'{}'", literal),
+            Token::True => "True",
+            Token::False => "False",
+            Token::Null => "Null",
+            Token::LBrace => "LBrace",
+            Token::RBrace => "RBrace",
+            Token::LBracket => "LBracket",
+            Token::RBracket => "RBracket",
+            Token::Colon => "Colon",
+            Token::Comma => "Comma",
+            Token::Illegal => "Illegal",
+            Token::Eof => "Eof",
+        };
+
+        write!(f, "{value}")
+    }
 }
 
 impl Token<'_> {
@@ -53,29 +77,6 @@ impl Token<'_> {
             Token::Illegal => Token::Illegal,
             Token::Eof => Token::Eof,
         }
-    }
-}
-
-impl std::fmt::Display for Token<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = match self {
-            Token::String(token_literal) | Token::Number(token_literal) => {
-                &token_literal.to_string()
-            }
-            Token::True => "True",
-            Token::False => "False",
-            Token::Null => "Null",
-            Token::LBrace => "LBrace",
-            Token::RBrace => "RBrace",
-            Token::LBracket => "LBracket",
-            Token::RBracket => "RBracket",
-            Token::Colon => "Colon",
-            Token::Comma => "Comma",
-            Token::Illegal => "Illegal",
-            Token::Eof => "Eof",
-        };
-
-        write!(f, "{value}")
     }
 }
 
