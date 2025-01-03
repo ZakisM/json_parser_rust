@@ -94,7 +94,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     self.errors.push(ExpectedTokenError {
                         expected: vec![Token::RBracket, Token::Comma],
-                        actual: self.current_token.clone().into_owned(),
+                        actual: self.peek_token.clone().into_owned(),
                     });
 
                     return None;
@@ -125,7 +125,7 @@ impl<'a> Parser<'a> {
                         Token::LBrace,
                         Token::LBracket,
                     ],
-                    actual: self.current_token.clone().into_owned(),
+                    actual: self.peek_token.clone().into_owned(),
                 });
 
                 return None;
@@ -162,7 +162,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     self.errors.push(ExpectedTokenError {
                         expected: vec![Token::RBrace, Token::Comma],
-                        actual: self.current_token.clone().into_owned(),
+                        actual: self.peek_token.clone().into_owned(),
                     });
 
                     return None;
