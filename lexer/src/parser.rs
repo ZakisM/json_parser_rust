@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::{
     ast::{JsonItem, JsonValue},
     Lexer, Token, TokenLiteral,
@@ -72,7 +74,7 @@ impl<'a> Parser<'a> {
             panic!("must start with LBrace");
         };
 
-        while self.peek_token != Token::Eof {
+        while self.current_token != Token::RBrace {
             // Parse an item
             let Token::String(key) = self.peek_token else {
                 panic!("expected string, found {:?}", self.peek_token);
@@ -106,22 +108,29 @@ impl<'a> Parser<'a> {
                 key: std::str::from_utf8(key.0).unwrap(),
                 value,
             });
-            self.next_token();
 
-            if self.current_token != Token::Comma {
-                match self.peek_token {
-                    Token::RBrace | Token::Eof => self.next_token(),
-                    _ => {
-                        panic!(
-                            "unexpected {:?} found following {:?}",
-                            self.peek_token, self.current_token
-                        )
-                    }
-                }
+            if self.peek_token == Token::RBrace {
+                break;
             }
+
+            let Token::Comma = self.peek_token else {
+                panic!("expected comma, found {:?}", self.peek_token);
+            };
+            self.next_token();
         }
 
         JsonValue::Object(items)
+    }
+
+    fn parse(mut self) -> JsonValue<'a> {
+        let res = self.parse_object();
+        self.next_token();
+
+        if self.current_token != Token::RBrace && self.peek_token != Token::Eof {
+            panic!("someting wrong");
+        }
+
+        res
     }
 }
 
@@ -135,16 +144,16 @@ mod tests {
 {
 	"string": "Hello, world!",
 	"number": 42,
-	"boolean": true,
 	"nested_object": {
 		"nested_string": "This is a nested string",
 		"nested_number": 100
-	}
+	},
+	"boolean": true
 }
 "#;
 
-        let mut parser = Parser::new(json.as_bytes());
+        let parser = Parser::new(json.as_bytes());
 
-        dbg!(&parser.parse_object());
+        dbg!(parser.parse());
     }
 }
