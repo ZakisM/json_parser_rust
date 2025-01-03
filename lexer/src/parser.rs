@@ -99,7 +99,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_key_value(&mut self) -> (&'a str, JsonValue<'a>) {
+    fn parse_item(&mut self) -> JsonItem<'a> {
         // Parse an item
         let Token::String(key) = self.peek_token else {
             panic!("expected string, found {:?}", self.peek_token);
@@ -115,7 +115,7 @@ impl<'a> Parser<'a> {
 
         let key = std::str::from_utf8(key.0).unwrap();
 
-        (key, value)
+        JsonItem::from((key, value))
     }
 
     fn parse_object(&mut self) -> JsonValue<'a> {
@@ -126,7 +126,8 @@ impl<'a> Parser<'a> {
         let mut items = Vec::new();
 
         loop {
-            items.push(JsonItem::from(self.parse_key_value()));
+            let item = self.parse_item();
+            items.push(item);
 
             if self.peek_token == Token::RBrace {
                 break;
