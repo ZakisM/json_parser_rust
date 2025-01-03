@@ -30,7 +30,6 @@ impl<'a> Parser<'a> {
         };
 
         parser.next_token();
-        parser.next_token();
 
         parser
     }
@@ -43,38 +42,29 @@ impl<'a> Parser<'a> {
     fn expect_peek(&mut self, expected: &Token<'_>) -> bool {
         if std::mem::discriminant(&self.peek_token) == std::mem::discriminant(expected) {
             self.next_token();
-
-            return true;
+            true
+        } else {
+            false
         }
-
-        false
     }
 
     fn parse_string(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
         let s = std::str::from_utf8(literal.0).unwrap();
 
-        let value = JsonValue::String(s);
-
-        Some(value)
+        Some(JsonValue::String(s))
     }
 
     fn parse_number(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
         let s = std::str::from_utf8(literal.0).unwrap();
         let n = s.parse::<usize>().unwrap();
 
-        let value = JsonValue::Number(n);
-
-        Some(value)
+        Some(JsonValue::Number(n))
     }
 
     fn parse_value(&mut self) -> JsonValue<'a> {
-        let value = match self.peek_token {
-            Token::String(token_literal) => self
-                .parse_string(token_literal)
-                .expect("expected JsonString"),
-            Token::Number(token_literal) => self
-                .parse_number(token_literal)
-                .expect("expected JsonNumber"),
+        match self.peek_token {
+            Token::String(literal) => self.parse_string(literal).expect("expected JsonString"),
+            Token::Number(literal) => self.parse_number(literal).expect("expected JsonNumber"),
             Token::True => JsonValue::Boolean(true),
             Token::False => JsonValue::Boolean(false),
             Token::Null => JsonValue::Null,
@@ -87,41 +77,31 @@ impl<'a> Parser<'a> {
                 self.parse_array().expect("expected JsonArray")
             }
             _ => panic!("unexpected token"),
-        };
-        self.next_token();
-
-        value
+        }
     }
 
     fn parse_array(&mut self) -> Option<JsonValue<'a>> {
-        let Token::LBracket = self.current_token else {
-            panic!("must start with LBracket");
-        };
-
         let mut items = Vec::new();
 
         loop {
             let value = self.parse_value();
+            self.next_token();
+
             items.push(value);
 
             if self.peek_token == Token::RBracket {
                 break;
             }
 
-            let Token::Comma = self.peek_token else {
+            if !expect_token!(self, Comma) {
                 panic!("expected comma, found {:?}", self.peek_token);
-            };
-            self.next_token();
+            }
         }
 
         Some(JsonValue::Array(items))
     }
 
     fn parse_object(&mut self) -> JsonValue<'a> {
-        let Token::LBrace = self.current_token else {
-            panic!("must start with LBrace");
-        };
-
         let mut items = Vec::new();
 
         loop {
@@ -131,12 +111,13 @@ impl<'a> Parser<'a> {
             };
             self.next_token();
 
-            let Token::Colon = self.peek_token else {
+            if !expect_token!(self, Colon) {
                 panic!("expected colon, found {:?}", self.peek_token);
-            };
-            self.next_token();
+            }
 
             let value = self.parse_value();
+            self.next_token();
+
             items.push(JsonItem {
                 key: std::str::from_utf8(key.0).unwrap(),
                 value,
@@ -146,17 +127,21 @@ impl<'a> Parser<'a> {
                 break;
             }
 
-            let Token::Comma = self.peek_token else {
+            if !expect_token!(self, Comma) {
                 panic!("expected comma, found {:?}", self.peek_token);
-            };
-            self.next_token();
+            }
         }
 
         JsonValue::Object(items)
     }
 
     fn parse(mut self) -> JsonValue<'a> {
+        if !expect_token!(self, LBrace) {
+            panic!("expected LBrace, found {:?}", self.peek_token);
+        }
+
         let res = self.parse_object();
+
         self.next_token();
 
         match (self.current_token, self.peek_token) {
