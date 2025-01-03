@@ -195,7 +195,7 @@ mod tests {
 	"number": 42,
 	"nested_object": {
 		"nested_string": "This is a nested string",
-		"nested_number": [100, 200, 300, [400, 500, [600, [700]]]]
+		"nested_number": [100, 200, 300, [400, 500, [600, [700, {"secret": 12345}]]]]
 	},
 	"boolean": true
 }
