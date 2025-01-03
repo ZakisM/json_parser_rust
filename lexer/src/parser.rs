@@ -18,7 +18,11 @@ macro_rules! expect_token {
     };
     ($self:expr, $variant:ident()) => {{
         if !$self.expect_peek(&Token::$variant(Default::default())) {
-            panic!("oh no");
+            panic!(
+                "expected {:?} but found \"{:?}\"",
+                stringify!($variant),
+                $self.peek_token
+            );
         }
 
         let Token::$variant(value) = $self.current_token else {
@@ -142,6 +146,7 @@ impl<'a> Parser<'a> {
 
     fn parse(mut self) -> JsonValue<'a> {
         let result = self.parse_object();
+
         self.next_token();
 
         if !matches!(
