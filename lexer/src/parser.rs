@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::{
     ast::{JsonProperty, JsonValue},
-    error::{Error, ExpectedTokenError},
+    error::ExpectedTokenError,
     Lexer, Token, TokenLiteral,
 };
 
@@ -46,7 +46,7 @@ impl<'a> Parser<'a> {
         self.peek_token = self.lexer.next_token();
     }
 
-    fn expect_peek(&mut self, expected: Token<'_>) -> Result<(), ExpectedTokenError> {
+    fn expect_peek(&mut self, expected: Token<'a>) -> Result<(), ExpectedTokenError> {
         if std::mem::discriminant(&self.peek_token) != std::mem::discriminant(&expected) {
             return Err(ExpectedTokenError {
                 expected: vec![expected.clone().into_owned()],
@@ -82,11 +82,11 @@ impl<'a> Parser<'a> {
             items.push(value);
 
             match self.peek_token {
-                Token::RBracket => break,
                 Token::Comma => self.next_token(),
+                Token::RBracket => break,
                 _ => {
                     return Err(ExpectedTokenError {
-                        expected: vec![Token::RBracket, Token::Comma],
+                        expected: vec![Token::Comma, Token::RBracket],
                         actual: self.peek_token.clone().into_owned(),
                     });
                 }
@@ -146,11 +146,11 @@ impl<'a> Parser<'a> {
             items.push(item);
 
             match self.peek_token {
-                Token::RBrace => break,
                 Token::Comma => self.next_token(),
+                Token::RBrace => break,
                 _ => {
                     return Err(ExpectedTokenError {
-                        expected: vec![Token::RBrace, Token::Comma],
+                        expected: vec![Token::Comma, Token::RBrace],
                         actual: self.peek_token.clone().into_owned(),
                     });
                 }
