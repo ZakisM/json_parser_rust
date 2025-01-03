@@ -53,17 +53,18 @@ impl<'a> Parser<'a> {
     }
 
     fn expect_peek(&mut self, expected: Token<'_>) -> bool {
-        if std::mem::discriminant(&self.peek_token) == std::mem::discriminant(&expected) {
-            self.next_token();
-            true
-        } else {
+        if std::mem::discriminant(&self.peek_token) != std::mem::discriminant(&expected) {
             self.errors.push(ExpectedTokenError {
                 expected: vec![expected.clone().into_owned()],
                 actual: self.peek_token.clone().into_owned(),
             });
 
-            false
+            return false;
         }
+
+        self.next_token();
+
+        true
     }
 
     fn parse_string(&self, literal: TokenLiteral<'a>) -> Option<JsonValue> {
