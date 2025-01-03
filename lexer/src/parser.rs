@@ -16,9 +16,17 @@ macro_rules! expect_token {
     ($self:expr, $variant:ident) => {
         $self.expect_peek(&Token::$variant)
     };
-    ($self:expr, $variant:ident()) => {
-        $self.expect_peek(&Token::$variant(Default::default()))
-    };
+    ($self:expr, $variant:ident()) => {{
+        if !$self.expect_peek(&Token::$variant(Default::default())) {
+            panic!("oh no");
+        }
+
+        let Token::$variant(value) = $self.current_token else {
+            unreachable!();
+        };
+
+        value
+    }};
 }
 
 impl<'a> Parser<'a> {
@@ -101,11 +109,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_item(&mut self) -> JsonItem<'a> {
-        // Parse an item
-        let Token::String(key) = self.peek_token else {
-            panic!("expected string, found {:?}", self.peek_token);
-        };
-        self.next_token();
+        let key = expect_token!(self, String());
 
         if !expect_token!(self, Colon) {
             panic!("expected colon, found {:?}", self.peek_token);
