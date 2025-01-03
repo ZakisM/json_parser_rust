@@ -67,6 +67,32 @@ impl<'a> Parser<'a> {
         Some(value)
     }
 
+    fn parse_value(&mut self) -> JsonValue<'a> {
+        let value = match self.peek_token {
+            Token::String(token_literal) => self
+                .parse_val_string(token_literal)
+                .expect("expected JsonString"),
+            Token::Number(token_literal) => self
+                .parse_val_number(token_literal)
+                .expect("expected JsonNumber"),
+            Token::True => JsonValue::Boolean(true),
+            Token::False => JsonValue::Boolean(false),
+            Token::Null => JsonValue::Null,
+            Token::LBrace => {
+                self.next_token();
+                self.parse_object()
+            }
+            Token::LBracket => {
+                self.next_token();
+                self.parse_val_array().expect("expected JsonArray")
+            }
+            _ => panic!("unexpected token"),
+        };
+        self.next_token();
+
+        value
+    }
+
     fn parse_val_array(&mut self) -> Option<JsonValue<'a>> {
         let Token::LBracket = self.current_token else {
             panic!("must start with LBracket");
@@ -75,28 +101,7 @@ impl<'a> Parser<'a> {
         let mut items = Vec::new();
 
         loop {
-            let value = match self.peek_token {
-                Token::String(token_literal) => self
-                    .parse_val_string(token_literal)
-                    .expect("expected JsonString"),
-                Token::Number(token_literal) => self
-                    .parse_val_number(token_literal)
-                    .expect("expected JsonNumber"),
-                Token::True => JsonValue::Boolean(true),
-                Token::False => JsonValue::Boolean(false),
-                Token::Null => JsonValue::Null,
-                Token::LBrace => {
-                    self.next_token();
-                    self.parse_object()
-                }
-                Token::LBracket => {
-                    self.next_token();
-                    self.parse_val_array().expect("expected JsonArray")
-                }
-                _ => panic!("unexpected token"),
-            };
-            self.next_token();
-
+            let value = self.parse_value();
             items.push(value);
 
             if self.peek_token == Token::RBracket {
@@ -131,28 +136,7 @@ impl<'a> Parser<'a> {
             };
             self.next_token();
 
-            let value = match self.peek_token {
-                Token::String(token_literal) => self
-                    .parse_val_string(token_literal)
-                    .expect("expected JsonString"),
-                Token::Number(token_literal) => self
-                    .parse_val_number(token_literal)
-                    .expect("expected JsonNumber"),
-                Token::True => JsonValue::Boolean(true),
-                Token::False => JsonValue::Boolean(false),
-                Token::Null => JsonValue::Null,
-                Token::LBrace => {
-                    self.next_token();
-                    self.parse_object()
-                }
-                Token::LBracket => {
-                    self.next_token();
-                    self.parse_val_array().expect("expected JsonArray")
-                }
-                _ => panic!("unexpected token"),
-            };
-            self.next_token();
-
+            let value = self.parse_value();
             items.push(JsonItem {
                 key: std::str::from_utf8(key.0).unwrap(),
                 value,
