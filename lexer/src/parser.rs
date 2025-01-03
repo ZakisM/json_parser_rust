@@ -108,8 +108,11 @@ impl<'a> Parser<'a> {
             });
             self.next_token();
 
-            if self.current_token != Token::Comma && self.peek_token == Token::RBrace {
-                self.next_token();
+            if self.current_token != Token::Comma {
+                match self.peek_token {
+                    Token::RBrace | Token::Eof => self.next_token(),
+                    _ => panic!("expected Comma found {:?}", self.current_token),
+                }
             }
         }
 
