@@ -61,26 +61,11 @@ impl<'a> Parser<'a> {
         Some(JsonValue::Number(n))
     }
 
-    fn parse_value(&mut self) -> JsonValue<'a> {
-        match self.peek_token {
-            Token::String(literal) => self.parse_string(literal).expect("expected JsonString"),
-            Token::Number(literal) => self.parse_number(literal).expect("expected JsonNumber"),
-            Token::True => JsonValue::Boolean(true),
-            Token::False => JsonValue::Boolean(false),
-            Token::Null => JsonValue::Null,
-            Token::LBrace => {
-                self.next_token();
-                self.parse_object()
-            }
-            Token::LBracket => {
-                self.next_token();
-                self.parse_array().expect("expected JsonArray")
-            }
-            _ => panic!("unexpected token"),
-        }
-    }
-
     fn parse_array(&mut self) -> Option<JsonValue<'a>> {
+        if !expect_token!(self, LBracket) {
+            panic!("expected LBracket found {:?}", self.peek_token);
+        }
+
         let mut items = Vec::new();
 
         loop {
@@ -101,27 +86,49 @@ impl<'a> Parser<'a> {
         Some(JsonValue::Array(items))
     }
 
+    fn parse_value(&mut self) -> JsonValue<'a> {
+        match self.peek_token {
+            Token::String(literal) => self.parse_string(literal).expect("expected JsonString"),
+            Token::Number(literal) => self.parse_number(literal).expect("expected JsonNumber"),
+            Token::True => JsonValue::Boolean(true),
+            Token::False => JsonValue::Boolean(false),
+            Token::Null => JsonValue::Null,
+            Token::LBrace => self.parse_object(),
+            Token::LBracket => self.parse_array().expect("expected JsonArray"),
+            _ => panic!("unexpected token"),
+        }
+    }
+
+    fn parse_key_value(&mut self) -> (&'a str, JsonValue<'a>) {
+        // Parse an item
+        let Token::String(key) = self.peek_token else {
+            panic!("expected string, found {:?}", self.peek_token);
+        };
+        self.next_token();
+
+        if !expect_token!(self, Colon) {
+            panic!("expected colon, found {:?}", self.peek_token);
+        }
+
+        let value = self.parse_value();
+        self.next_token();
+
+        let key = std::str::from_utf8(key.0).unwrap();
+
+        (key, value)
+    }
+
     fn parse_object(&mut self) -> JsonValue<'a> {
+        if !expect_token!(self, LBrace) {
+            panic!("expected LBrace found {:?}", self.peek_token);
+        }
+
         let mut items = Vec::new();
 
         loop {
-            // Parse an item
-            let Token::String(key) = self.peek_token else {
-                panic!("expected string, found {:?}", self.peek_token);
-            };
-            self.next_token();
+            let (key, value) = self.parse_key_value();
 
-            if !expect_token!(self, Colon) {
-                panic!("expected colon, found {:?}", self.peek_token);
-            }
-
-            let value = self.parse_value();
-            self.next_token();
-
-            items.push(JsonItem {
-                key: std::str::from_utf8(key.0).unwrap(),
-                value,
-            });
+            items.push(JsonItem { key, value });
 
             if self.peek_token == Token::RBrace {
                 break;
@@ -136,10 +143,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse(mut self) -> JsonValue<'a> {
-        if !expect_token!(self, LBrace) {
-            panic!("expected LBrace, found {:?}", self.peek_token);
-        }
-
         let res = self.parse_object();
 
         self.next_token();
