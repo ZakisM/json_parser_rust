@@ -126,9 +126,7 @@ impl<'a> Parser<'a> {
         let mut items = Vec::new();
 
         loop {
-            let (key, value) = self.parse_key_value();
-
-            items.push(JsonItem { key, value });
+            items.push(JsonItem::from(self.parse_key_value()));
 
             if self.peek_token == Token::RBrace {
                 break;

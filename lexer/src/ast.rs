@@ -6,6 +6,15 @@ pub struct JsonItem<'a> {
     pub value: JsonValue<'a>,
 }
 
+impl<'a> From<(&'a str, JsonValue<'a>)> for JsonItem<'a> {
+    fn from(item: (&'a str, JsonValue<'a>)) -> Self {
+        Self {
+            key: item.0,
+            value: item.1,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum JsonValue<'a> {
     Null,
