@@ -111,7 +111,12 @@ impl<'a> Parser<'a> {
             if self.current_token != Token::Comma {
                 match self.peek_token {
                     Token::RBrace | Token::Eof => self.next_token(),
-                    _ => panic!("expected Comma found {:?}", self.current_token),
+                    _ => {
+                        panic!(
+                            "unexpected {:?} found following {:?}",
+                            self.peek_token, self.current_token
+                        )
+                    }
                 }
             }
         }
