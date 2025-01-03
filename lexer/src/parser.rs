@@ -142,14 +142,18 @@ impl<'a> Parser<'a> {
     }
 
     fn parse(mut self) -> JsonValue<'a> {
-        let res = self.parse_object();
+        let result = self.parse_object();
 
         self.next_token();
 
-        match (self.current_token, self.peek_token) {
-            (Token::RBrace, Token::Eof) => res,
-            _ => panic!("someting wrong"),
+        if !matches!(
+            (self.current_token, self.peek_token),
+            (Token::RBrace, Token::Eof)
+        ) {
+            panic!("someting wrong");
         }
+
+        result
     }
 }
 
