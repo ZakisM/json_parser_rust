@@ -159,11 +159,10 @@ impl<'a> Parser<'a> {
         let res = self.parse_object();
         self.next_token();
 
-        if self.current_token == Token::RBrace && self.peek_token != Token::Eof {
-            panic!("someting wrong");
+        match (self.current_token, self.peek_token) {
+            (Token::RBrace, Token::Eof) => res,
+            _ => panic!("someting wrong"),
         }
-
-        res
     }
 }
 
