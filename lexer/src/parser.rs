@@ -80,12 +80,10 @@ impl<'a> Parser<'a> {
             let value = self.parse_value();
             items.push(value);
 
-            if self.peek_token == Token::RBracket {
-                break;
-            }
-
-            if !expect_token!(self, Comma) {
-                panic!("expected comma, found {:?}", self.peek_token);
+            match self.peek_token {
+                Token::RBracket => break,
+                Token::Comma => self.next_token(),
+                _ => panic!("expected comma, found {:?}", self.peek_token),
             }
         }
 
@@ -132,12 +130,10 @@ impl<'a> Parser<'a> {
             let item = self.parse_item();
             items.push(item);
 
-            if self.peek_token == Token::RBrace {
-                break;
-            }
-
-            if !expect_token!(self, Comma) {
-                panic!("expected comma, found {:?}", self.peek_token);
+            match self.peek_token {
+                Token::RBrace => break,
+                Token::Comma => self.next_token(),
+                _ => panic!("expected comma, found {:?}", self.peek_token),
             }
         }
 
