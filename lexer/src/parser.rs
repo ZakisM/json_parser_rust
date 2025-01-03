@@ -72,7 +72,7 @@ impl<'a> Parser<'a> {
             panic!("must start with LBrace");
         };
 
-        while !matches!(self.current_token, Token::RBrace | Token::Eof) {
+        while self.peek_token != Token::Eof {
             // Parse an item
             let Token::String(key) = self.peek_token else {
                 panic!("expected string, found {:?}", self.peek_token);
@@ -106,12 +106,11 @@ impl<'a> Parser<'a> {
                 key: std::str::from_utf8(key.0).unwrap(),
                 value,
             });
-
-            if !matches!(self.peek_token, Token::Comma | Token::RBrace | Token::Eof) {
-                panic!("expected Comma | RBrace found {:?}", self.peek_token);
-            }
-
             self.next_token();
+
+            if self.current_token != Token::Comma && self.peek_token == Token::RBrace {
+                self.next_token();
+            }
         }
 
         JsonValue::Object(items)
