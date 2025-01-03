@@ -11,19 +11,14 @@ pub struct Parser<'a> {
     lexer: Lexer<'a>,
     current_token: Token<'a>,
     peek_token: Token<'a>,
-    errors: Vec<ExpectedTokenError>,
 }
 
 macro_rules! expect_token {
     ($self:expr, $variant:ident) => {
-        if !$self.expect_peek(Token::$variant) {
-            return None;
-        }
+        $self.expect_peek(Token::$variant)?;
     };
     ($self:expr, $variant:ident()) => {{
-        if !$self.expect_peek(Token::$variant(Default::default())) {
-            return None;
-        }
+        $self.expect_peek(Token::$variant(Default::default()))?;
 
         let Token::$variant(value) = $self.current_token.clone() else {
             unreachable!();
@@ -39,7 +34,6 @@ impl<'a> Parser<'a> {
             lexer: Lexer::new(input),
             current_token: Token::Illegal,
             peek_token: Token::Illegal,
-            errors: Vec::new(),
         };
 
         parser.next_token();
@@ -52,35 +46,33 @@ impl<'a> Parser<'a> {
         self.peek_token = self.lexer.next_token();
     }
 
-    fn expect_peek(&mut self, expected: Token<'_>) -> bool {
+    fn expect_peek(&mut self, expected: Token<'_>) -> Result<(), ExpectedTokenError> {
         if std::mem::discriminant(&self.peek_token) != std::mem::discriminant(&expected) {
-            self.errors.push(ExpectedTokenError {
+            return Err(ExpectedTokenError {
                 expected: vec![expected.clone().into_owned()],
                 actual: self.peek_token.clone().into_owned(),
             });
-
-            return false;
         }
 
         self.next_token();
 
-        true
+        Ok(())
     }
 
-    fn parse_string(&self, literal: TokenLiteral<'a>) -> Option<JsonValue> {
+    fn parse_string(&self, literal: TokenLiteral<'a>) -> Result<JsonValue, ExpectedTokenError> {
         let s = String::from_utf8(literal.0.into_owned()).unwrap();
 
-        Some(JsonValue::String(s))
+        Ok(JsonValue::String(s))
     }
 
-    fn parse_number(&self, literal: TokenLiteral<'a>) -> Option<JsonValue> {
+    fn parse_number(&self, literal: TokenLiteral<'a>) -> Result<JsonValue, ExpectedTokenError> {
         let s = std::str::from_utf8(&literal.0).unwrap();
         let n = s.parse::<usize>().unwrap();
 
-        Some(JsonValue::Number(n))
+        Ok(JsonValue::Number(n))
     }
 
-    fn parse_array(&mut self) -> Option<JsonValue> {
+    fn parse_array(&mut self) -> Result<JsonValue, ExpectedTokenError> {
         expect_token!(self, LBracket);
 
         let mut items = Vec::new();
@@ -93,20 +85,18 @@ impl<'a> Parser<'a> {
                 Token::RBracket => break,
                 Token::Comma => self.next_token(),
                 _ => {
-                    self.errors.push(ExpectedTokenError {
+                    return Err(ExpectedTokenError {
                         expected: vec![Token::RBracket, Token::Comma],
                         actual: self.peek_token.clone().into_owned(),
                     });
-
-                    return None;
                 }
             }
         }
 
-        Some(JsonValue::Array(items))
+        Ok(JsonValue::Array(items))
     }
 
-    fn parse_value(&mut self) -> Option<JsonValue> {
+    fn parse_value(&mut self) -> Result<JsonValue, ExpectedTokenError> {
         let value = match self.peek_token.clone() {
             Token::String(literal) => self.parse_string(literal)?,
             Token::Number(literal) => self.parse_number(literal)?,
@@ -116,7 +106,7 @@ impl<'a> Parser<'a> {
             Token::LBrace => self.parse_object()?,
             Token::LBracket => self.parse_array()?,
             _ => {
-                self.errors.push(ExpectedTokenError {
+                return Err(ExpectedTokenError {
                     expected: vec![
                         Token::String(TokenLiteral(Cow::Borrowed(b"String"))),
                         Token::Number(TokenLiteral(Cow::Borrowed(b"Number"))),
@@ -128,16 +118,14 @@ impl<'a> Parser<'a> {
                     ],
                     actual: self.peek_token.clone().into_owned(),
                 });
-
-                return None;
             }
         };
         self.next_token();
 
-        Some(value)
+        Ok(value)
     }
 
-    fn parse_property(&mut self) -> Option<JsonProperty> {
+    fn parse_property(&mut self) -> Result<JsonProperty, ExpectedTokenError> {
         let key = expect_token!(self, String());
 
         expect_token!(self, Colon);
@@ -145,10 +133,10 @@ impl<'a> Parser<'a> {
         let key = String::from_utf8(key.0.into_owned()).unwrap();
         let value = self.parse_value()?;
 
-        Some(JsonProperty::from((key, value)))
+        Ok(JsonProperty::from((key, value)))
     }
 
-    fn parse_object(&mut self) -> Option<JsonValue> {
+    fn parse_object(&mut self) -> Result<JsonValue, ExpectedTokenError> {
         expect_token!(self, LBrace);
 
         let mut items = Vec::new();
@@ -161,21 +149,19 @@ impl<'a> Parser<'a> {
                 Token::RBrace => break,
                 Token::Comma => self.next_token(),
                 _ => {
-                    self.errors.push(ExpectedTokenError {
+                    return Err(ExpectedTokenError {
                         expected: vec![Token::RBrace, Token::Comma],
                         actual: self.peek_token.clone().into_owned(),
                     });
-
-                    return None;
                 }
             }
         }
 
-        Some(JsonValue::Object(items))
+        Ok(JsonValue::Object(items))
     }
 
-    fn parse(mut self) -> Result<JsonValue, Error> {
-        let result = self.parse_object();
+    fn parse(mut self) -> Result<JsonValue, ExpectedTokenError> {
+        let result = self.parse_object()?;
 
         self.next_token();
 
@@ -183,17 +169,13 @@ impl<'a> Parser<'a> {
             (&self.current_token, &self.peek_token),
             (Token::RBrace, Token::Eof)
         ) {
-            self.errors.push(ExpectedTokenError {
+            return Err(ExpectedTokenError {
                 expected: vec![Token::Eof],
                 actual: self.current_token.clone().into_owned(),
             });
         }
 
-        if !self.errors.is_empty() {
-            return Err(Error::ParserErrors(self.errors));
-        }
-
-        Ok(result.expect("result should never be None"))
+        Ok(result)
     }
 }
 
