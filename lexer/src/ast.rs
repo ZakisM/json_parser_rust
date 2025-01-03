@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct JsonItem<'a> {
-    pub key: &'a str,
-    pub value: JsonValue<'a>,
+pub struct JsonProperty {
+    pub key: String,
+    pub value: JsonValue,
 }
 
-impl<'a> From<(&'a str, JsonValue<'a>)> for JsonItem<'a> {
-    fn from(item: (&'a str, JsonValue<'a>)) -> Self {
+impl From<(String, JsonValue)> for JsonProperty {
+    fn from(item: (String, JsonValue)) -> Self {
         Self {
             key: item.0,
             value: item.1,
@@ -16,22 +16,22 @@ impl<'a> From<(&'a str, JsonValue<'a>)> for JsonItem<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum JsonValue<'a> {
+pub enum JsonValue {
     Null,
     Boolean(bool),
     Number(usize),
-    String(&'a str),
-    Object(Vec<JsonItem<'a>>),
-    Array(Vec<JsonValue<'a>>),
+    String(String),
+    Object(Vec<JsonProperty>),
+    Array(Vec<JsonValue>),
 }
 
-impl<'a> JsonValue<'a> {
+impl JsonValue {
     fn inner_value(&self) -> String {
         match self {
             JsonValue::Null => "null".to_owned(),
             JsonValue::Boolean(b) => b.to_string(),
             JsonValue::Number(n) => n.to_string(),
-            JsonValue::String(s) => s.to_string(),
+            JsonValue::String(s) => s.to_owned(),
             JsonValue::Array(_) => "Array".to_string(),
             JsonValue::Object(_) => "Object".to_string(),
         }
@@ -77,94 +77,70 @@ mod tests {
     #[test]
     fn flattened() {
         let root = JsonValue::Object(vec![
-            JsonItem {
-                key: "name",
-                value: JsonValue::String("John"),
-            },
-            JsonItem {
-                key: "age",
-                value: JsonValue::Number(30),
-            },
-            JsonItem {
-                key: "isStudent",
-                value: JsonValue::Boolean(false),
-            },
-            JsonItem {
-                key: "address",
-                value: JsonValue::Object(vec![
-                    JsonItem {
-                        key: "street",
-                        value: JsonValue::String("123 Main St"),
-                    },
-                    JsonItem {
-                        key: "city",
-                        value: JsonValue::String("New York"),
-                    },
-                    JsonItem {
-                        key: "zipcode",
-                        value: JsonValue::Null,
-                    },
+            JsonProperty::from(("name".to_owned(), JsonValue::String("John".to_owned()))),
+            JsonProperty::from(("age".to_owned(), JsonValue::Number(30))),
+            JsonProperty::from(("isStudent".to_owned(), JsonValue::Boolean(false))),
+            JsonProperty::from((
+                "address".to_owned(),
+                JsonValue::Object(vec![
+                    JsonProperty::from((
+                        "street".to_owned(),
+                        JsonValue::String("123 Main St".to_owned()),
+                    )),
+                    JsonProperty::from((
+                        "city".to_owned(),
+                        JsonValue::String("New York".to_owned()),
+                    )),
+                    JsonProperty::from(("zipcode".to_owned(), JsonValue::Null)),
                 ]),
-            },
-            JsonItem {
-                key: "courses",
-                value: JsonValue::Array(vec![
+            )),
+            JsonProperty::from((
+                "courses".to_owned(),
+                JsonValue::Array(vec![
                     JsonValue::Object(vec![
-                        JsonItem {
-                            key: "courseName",
-                            value: JsonValue::String("Math"),
-                        },
-                        JsonItem {
-                            key: "grade",
-                            value: JsonValue::String("A"),
-                        },
+                        JsonProperty::from((
+                            "courseName".to_owned(),
+                            JsonValue::String("Math".to_owned()),
+                        )),
+                        JsonProperty::from(("grade".to_owned(), JsonValue::String("A".to_owned()))),
                     ]),
                     JsonValue::Object(vec![
-                        JsonItem {
-                            key: "courseName",
-                            value: JsonValue::String("Science"),
-                        },
-                        JsonItem {
-                            key: "grade",
-                            value: JsonValue::String("B"),
-                        },
+                        JsonProperty::from((
+                            "courseName".to_owned(),
+                            JsonValue::String("Science".to_owned()),
+                        )),
+                        JsonProperty::from(("grade".to_owned(), JsonValue::String("B".to_owned()))),
                     ]),
                 ]),
-            },
-            JsonItem {
-                key: "preferences",
-                value: JsonValue::Object(vec![
-                    JsonItem {
-                        key: "notifications",
-                        value: JsonValue::Boolean(true),
-                    },
-                    JsonItem {
-                        key: "theme",
-                        value: JsonValue::String("dark"),
-                    },
+            )),
+            JsonProperty::from((
+                "preferences".to_owned(),
+                JsonValue::Object(vec![
+                    JsonProperty::from(("notifications".to_owned(), JsonValue::Boolean(true))),
+                    JsonProperty::from(("theme".to_owned(), JsonValue::String("dark".to_owned()))),
                 ]),
-            },
-            JsonItem {
-                key: "scores",
-                value: JsonValue::Array(vec![
+            )),
+            JsonProperty::from((
+                "scores".to_owned(),
+                JsonValue::Array(vec![
                     JsonValue::Number(95),
                     JsonValue::Number(88),
                     JsonValue::Number(76),
                 ]),
-            },
-            JsonItem {
-                key: "metadata",
-                value: JsonValue::Object(vec![
-                    JsonItem {
-                        key: "createdAt",
-                        value: JsonValue::String("2023-10-01T12:34:56Z"),
-                    },
-                    JsonItem {
-                        key: "updatedAt",
-                        value: JsonValue::String("2023-10-01T12:34:56Z"),
-                    },
+            )),
+            JsonProperty::from((
+                "metadata".to_owned(),
+                JsonValue::Object(vec![
+                    JsonProperty::from((
+                        "createdAt".to_owned(),
+                        JsonValue::String("2023-10-01T12:34:56Z".to_owned()),
+                    )),
+                    JsonProperty::from((
+                        "updatedAt".to_owned(),
+                        JsonValue::String("2023-10-01T12:34:56Z".to_owned()),
+                    )),
                 ]),
-            },
+            )),
         ]);
 
         dbg!(&to_flattened(&root, None));

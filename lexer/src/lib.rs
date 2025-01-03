@@ -1,13 +1,21 @@
+use std::borrow::Cow;
+
 mod ast;
+mod error;
 mod parser;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-struct TokenLiteral<'a>(&'a [u8]);
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+struct TokenLiteral<'a>(Cow<'a, [u8]>);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+impl std::fmt::Display for TokenLiteral<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = std::str::from_utf8(&self.0).unwrap_or("Unknown data");
+        write!(f, "{}", value)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Token<'a> {
-    Illegal,
-    Eof,
     // Values
     String(TokenLiteral<'a>),
     Number(TokenLiteral<'a>),
@@ -21,6 +29,54 @@ enum Token<'a> {
     RBracket,
     Colon,
     Comma,
+    Illegal,
+    Eof,
+}
+
+impl Token<'_> {
+    fn into_owned(self) -> Token<'static> {
+        match self {
+            Token::String(token_literal) | Token::Number(token_literal) => {
+                let inner = token_literal.0.into_owned();
+
+                Token::String(TokenLiteral(Cow::Owned(inner)))
+            }
+            Token::True => Token::True,
+            Token::False => Token::False,
+            Token::Null => Token::Null,
+            Token::LBrace => Token::LBrace,
+            Token::RBrace => Token::RBrace,
+            Token::LBracket => Token::LBracket,
+            Token::RBracket => Token::RBracket,
+            Token::Colon => Token::Colon,
+            Token::Comma => Token::Comma,
+            Token::Illegal => Token::Illegal,
+            Token::Eof => Token::Eof,
+        }
+    }
+}
+
+impl std::fmt::Display for Token<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            Token::String(token_literal) | Token::Number(token_literal) => {
+                &token_literal.to_string()
+            }
+            Token::True => "True",
+            Token::False => "False",
+            Token::Null => "Null",
+            Token::LBrace => "LBrace",
+            Token::RBrace => "RBrace",
+            Token::LBracket => "LBracket",
+            Token::RBracket => "RBracket",
+            Token::Colon => "Colon",
+            Token::Comma => "Comma",
+            Token::Illegal => "Illegal",
+            Token::Eof => "Eof",
+        };
+
+        write!(f, "{value}")
+    }
 }
 
 #[derive(Debug)]
@@ -137,12 +193,12 @@ impl<'a> Lexer<'a> {
             Some(other) if other.is_ascii_digit() => {
                 let num = self.read_number();
 
-                return Token::Number(TokenLiteral(num));
+                return Token::Number(TokenLiteral(Cow::Borrowed(num)));
             }
             Some(b'"') => {
                 let str = self.read_string();
 
-                Token::String(TokenLiteral(str))
+                Token::String(TokenLiteral(Cow::Borrowed(str)))
             }
             _ if self.read_position > self.input.len() => Token::Eof,
             _ => Token::Illegal,
@@ -192,12 +248,12 @@ mod tests {
     }
     macro_rules! tok_str {
         ($str:literal) => {
-            Token::String(TokenLiteral($str.as_bytes()))
+            Token::String(TokenLiteral(Cow::Borrowed($str.as_bytes())))
         };
     }
     macro_rules! tok_num {
         ($num:literal) => {
-            Token::Number(TokenLiteral(stringify!($num).as_bytes()))
+            Token::Number(TokenLiteral(Cow::Borrowed(stringify!($num).as_bytes())))
         };
     }
 

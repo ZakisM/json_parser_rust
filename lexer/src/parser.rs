@@ -1,7 +1,8 @@
-use core::panic;
+use std::borrow::Cow;
 
 use crate::{
-    ast::{JsonItem, JsonValue},
+    ast::{JsonProperty, JsonValue},
+    error::{Error, ExpectedTokenError},
     Lexer, Token, TokenLiteral,
 };
 
@@ -10,22 +11,21 @@ pub struct Parser<'a> {
     lexer: Lexer<'a>,
     current_token: Token<'a>,
     peek_token: Token<'a>,
+    errors: Vec<ExpectedTokenError>,
 }
 
 macro_rules! expect_token {
     ($self:expr, $variant:ident) => {
-        $self.expect_peek(&Token::$variant)
+        if !$self.expect_peek(Token::$variant) {
+            return None;
+        }
     };
     ($self:expr, $variant:ident()) => {{
-        if !$self.expect_peek(&Token::$variant(Default::default())) {
-            panic!(
-                "expected {:?} but found \"{:?}\"",
-                stringify!($variant),
-                $self.peek_token
-            );
+        if !$self.expect_peek(Token::$variant(Default::default())) {
+            return None;
         }
 
-        let Token::$variant(value) = $self.current_token else {
+        let Token::$variant(value) = $self.current_token.clone() else {
             unreachable!();
         };
 
@@ -39,6 +39,7 @@ impl<'a> Parser<'a> {
             lexer: Lexer::new(input),
             current_token: Token::Illegal,
             peek_token: Token::Illegal,
+            errors: Vec::new(),
         };
 
         parser.next_token();
@@ -47,116 +48,151 @@ impl<'a> Parser<'a> {
     }
 
     fn next_token(&mut self) {
-        self.current_token = self.peek_token;
+        self.current_token = self.peek_token.clone();
         self.peek_token = self.lexer.next_token();
     }
 
-    fn expect_peek(&mut self, expected: &Token<'_>) -> bool {
-        if std::mem::discriminant(&self.peek_token) == std::mem::discriminant(expected) {
+    fn expect_peek(&mut self, expected: Token<'_>) -> bool {
+        if std::mem::discriminant(&self.peek_token) == std::mem::discriminant(&expected) {
             self.next_token();
             true
         } else {
+            self.errors.push(ExpectedTokenError {
+                expected: vec![expected.clone().into_owned()],
+                actual: self.peek_token.clone().into_owned(),
+            });
+
             false
         }
     }
 
-    fn parse_string(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
-        let s = std::str::from_utf8(literal.0).unwrap();
+    fn parse_string(&self, literal: TokenLiteral<'a>) -> Option<JsonValue> {
+        let s = String::from_utf8(literal.0.into_owned()).unwrap();
 
         Some(JsonValue::String(s))
     }
 
-    fn parse_number(&mut self, literal: TokenLiteral<'a>) -> Option<JsonValue<'a>> {
-        let s = std::str::from_utf8(literal.0).unwrap();
+    fn parse_number(&self, literal: TokenLiteral<'a>) -> Option<JsonValue> {
+        let s = std::str::from_utf8(&literal.0).unwrap();
         let n = s.parse::<usize>().unwrap();
 
         Some(JsonValue::Number(n))
     }
 
-    fn parse_array(&mut self) -> Option<JsonValue<'a>> {
-        if !expect_token!(self, LBracket) {
-            panic!("expected LBracket found {:?}", self.peek_token);
-        }
+    fn parse_array(&mut self) -> Option<JsonValue> {
+        expect_token!(self, LBracket);
 
         let mut items = Vec::new();
 
         loop {
-            let value = self.parse_value();
+            let value = self.parse_value()?;
             items.push(value);
 
             match self.peek_token {
                 Token::RBracket => break,
                 Token::Comma => self.next_token(),
-                _ => panic!("expected comma, found {:?}", self.peek_token),
+                _ => {
+                    self.errors.push(ExpectedTokenError {
+                        expected: vec![Token::RBracket, Token::Comma],
+                        actual: self.current_token.clone().into_owned(),
+                    });
+
+                    return None;
+                }
             }
         }
 
         Some(JsonValue::Array(items))
     }
 
-    fn parse_value(&mut self) -> JsonValue<'a> {
-        let value = match self.peek_token {
-            Token::String(literal) => self.parse_string(literal).expect("expected JsonString"),
-            Token::Number(literal) => self.parse_number(literal).expect("expected JsonNumber"),
+    fn parse_value(&mut self) -> Option<JsonValue> {
+        let value = match self.peek_token.clone() {
+            Token::String(literal) => self.parse_string(literal)?,
+            Token::Number(literal) => self.parse_number(literal)?,
             Token::True => JsonValue::Boolean(true),
             Token::False => JsonValue::Boolean(false),
             Token::Null => JsonValue::Null,
-            Token::LBrace => self.parse_object(),
-            Token::LBracket => self.parse_array().expect("expected JsonArray"),
-            _ => panic!("unexpected token"),
+            Token::LBrace => self.parse_object()?,
+            Token::LBracket => self.parse_array()?,
+            _ => {
+                self.errors.push(ExpectedTokenError {
+                    expected: vec![
+                        Token::String(TokenLiteral(Cow::Borrowed(b"String"))),
+                        Token::Number(TokenLiteral(Cow::Borrowed(b"Number"))),
+                        Token::True,
+                        Token::False,
+                        Token::Null,
+                        Token::LBrace,
+                        Token::LBracket,
+                    ],
+                    actual: self.current_token.clone().into_owned(),
+                });
+
+                return None;
+            }
         };
         self.next_token();
 
-        value
+        Some(value)
     }
 
-    fn parse_item(&mut self) -> JsonItem<'a> {
+    fn parse_property(&mut self) -> Option<JsonProperty> {
         let key = expect_token!(self, String());
 
-        if !expect_token!(self, Colon) {
-            panic!("expected colon, found {:?}", self.peek_token);
-        }
+        expect_token!(self, Colon);
 
-        let key = std::str::from_utf8(key.0).unwrap();
-        let value = self.parse_value();
+        let key = String::from_utf8(key.0.into_owned()).unwrap();
+        let value = self.parse_value()?;
 
-        JsonItem::from((key, value))
+        Some(JsonProperty::from((key, value)))
     }
 
-    fn parse_object(&mut self) -> JsonValue<'a> {
-        if !expect_token!(self, LBrace) {
-            panic!("expected LBrace found {:?}", self.peek_token);
-        }
+    fn parse_object(&mut self) -> Option<JsonValue> {
+        expect_token!(self, LBrace);
 
         let mut items = Vec::new();
 
         loop {
-            let item = self.parse_item();
+            let item = self.parse_property()?;
             items.push(item);
 
             match self.peek_token {
                 Token::RBrace => break,
                 Token::Comma => self.next_token(),
-                _ => panic!("expected comma, found {:?}", self.peek_token),
+                _ => {
+                    self.errors.push(ExpectedTokenError {
+                        expected: vec![Token::RBrace, Token::Comma],
+                        actual: self.current_token.clone().into_owned(),
+                    });
+
+                    return None;
+                }
             }
         }
 
-        JsonValue::Object(items)
+        Some(JsonValue::Object(items))
     }
 
-    fn parse(mut self) -> JsonValue<'a> {
+    fn parse(mut self) -> Result<JsonValue, Error> {
         let result = self.parse_object();
 
         self.next_token();
 
         if !matches!(
-            (self.current_token, self.peek_token),
+            (&self.current_token, &self.peek_token),
             (Token::RBrace, Token::Eof)
         ) {
-            panic!("someting wrong");
+            self.errors.push(ExpectedTokenError {
+                expected: vec![Token::Eof],
+                actual: self.current_token.clone().into_owned(),
+            });
         }
 
-        result
+        if !self.errors.is_empty() {
+            return Err(Error::ParserErrors(self.errors));
+        }
+
+        Ok(result.expect("result should never be None"))
     }
 }
 
