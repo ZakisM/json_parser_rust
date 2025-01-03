@@ -74,7 +74,7 @@ impl<'a> Parser<'a> {
             panic!("must start with LBrace");
         };
 
-        while self.current_token != Token::RBrace {
+        loop {
             // Parse an item
             let Token::String(key) = self.peek_token else {
                 panic!("expected string, found {:?}", self.peek_token);
@@ -126,7 +126,7 @@ impl<'a> Parser<'a> {
         let res = self.parse_object();
         self.next_token();
 
-        if self.current_token != Token::RBrace && self.peek_token != Token::Eof {
+        if self.current_token == Token::RBrace && self.peek_token != Token::Eof {
             panic!("someting wrong");
         }
 
@@ -154,6 +154,6 @@ mod tests {
 
         let parser = Parser::new(json.as_bytes());
 
-        dbg!(parser.parse());
+        dbg!(&parser.parse());
     }
 }
