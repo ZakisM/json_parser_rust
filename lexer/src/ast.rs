@@ -37,7 +37,7 @@ impl<'a> JsonValue<'a> {
         }
     }
 
-    pub fn as_flattened(&'a self) -> BTreeMap<Cow<'a, str>, String> {
+    pub fn as_flattened(&self) -> BTreeMap<Cow<'a, str>, String> {
         let mut res = BTreeMap::new();
 
         match self {
@@ -82,6 +82,20 @@ impl<'a> JsonValue<'a> {
                     }
                 }
             }
+            JsonValue::Array(array) => {
+                let mut properties = Vec::new();
+
+                for (index, nested_value) in array.iter().enumerate() {
+                    properties.push(JsonProperty {
+                        key: Cow::Owned(format!("{:03}", index)),
+                        value: nested_value.clone(),
+                    });
+                }
+
+                let root = JsonValue::Object(properties);
+
+                return root.as_flattened();
+            }
             _ => panic!("expected root to be of type JsonValue::Object"),
         }
 
@@ -94,7 +108,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn flattened() {
+    fn root_object_flattened() {
         let root = JsonValue::Object(vec![
             JsonProperty::from(("name", JsonValue::String("John"))),
             JsonProperty::from(("age", JsonValue::Number(30))),
@@ -170,6 +184,78 @@ mod tests {
                 ("scores.000".into(), "95".into()),
                 ("scores.001".into(), "88".into()),
                 ("scores.002".into(), "76".into()),
+            ])
+        );
+    }
+
+    #[test]
+    fn root_array_flattened() {
+        let root = JsonValue::Array(vec![
+            JsonValue::Object(vec![
+                JsonProperty::from(("albumId", JsonValue::Number(1))),
+                JsonProperty::from(("id", JsonValue::Number(1))),
+                JsonProperty::from((
+                    "title",
+                    JsonValue::String("accusamus beatae ad facilis cum similique qui sunt"),
+                )),
+                JsonProperty::from((
+                    "url",
+                    JsonValue::String("https://via.placeholder.com/600/92c952"),
+                )),
+                JsonProperty::from((
+                    "thumbnailUrl",
+                    JsonValue::String("https://via.placeholder.com/150/92c952"),
+                )),
+            ]),
+            JsonValue::Object(vec![
+                JsonProperty::from(("albumId", JsonValue::Number(1))),
+                JsonProperty::from(("id", JsonValue::Number(2))),
+                JsonProperty::from((
+                    "title",
+                    JsonValue::String("reprehenderit est deserunt velit ipsam"),
+                )),
+                JsonProperty::from((
+                    "url",
+                    JsonValue::String("https://via.placeholder.com/600/771796"),
+                )),
+                JsonProperty::from((
+                    "thumbnailUrl",
+                    JsonValue::String("https://via.placeholder.com/150/771796"),
+                )),
+            ]),
+        ]);
+
+        assert_eq!(
+            root.as_flattened(),
+            BTreeMap::from([
+                ("000.albumId".into(), "1".into()),
+                ("000.id".into(), "1".into()),
+                (
+                    "000.thumbnailUrl".into(),
+                    "https://via.placeholder.com/150/92c952".into()
+                ),
+                (
+                    "000.title".into(),
+                    "accusamus beatae ad facilis cum similique qui sunt".into()
+                ),
+                (
+                    "000.url".into(),
+                    "https://via.placeholder.com/600/92c952".into()
+                ),
+                ("001.albumId".into(), "1".into()),
+                ("001.id".into(), "2".into()),
+                (
+                    "001.thumbnailUrl".into(),
+                    "https://via.placeholder.com/150/771796".into()
+                ),
+                (
+                    "001.title".into(),
+                    "reprehenderit est deserunt velit ipsam".into()
+                ),
+                (
+                    "001.url".into(),
+                    "https://via.placeholder.com/600/771796".into()
+                ),
             ])
         );
     }
