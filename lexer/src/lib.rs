@@ -2,13 +2,13 @@ pub mod ast;
 pub mod error;
 pub mod parser;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub origin: &'a [u8],
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     // Values
     String,
@@ -23,6 +23,7 @@ pub enum TokenKind {
     RBracket,
     Colon,
     Comma,
+    #[default]
     Illegal,
     Eof,
 }
@@ -183,7 +184,7 @@ impl<'a> Lexer<'a> {
             _ if self.read_position > self.input.len() => {
                 return Token {
                     kind: TokenKind::Eof,
-                    origin: b"",
+                    ..Default::default()
                 }
             }
             _ => TokenKind::Illegal,
@@ -273,7 +274,7 @@ macro_rules! tok {
     (Eof) => {
         Token {
             kind: TokenKind::Eof,
-            origin: b"",
+            ..Default::default()
         }
     };
 }

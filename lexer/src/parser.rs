@@ -18,11 +18,11 @@ impl<'a> Parser<'a> {
             // TODO: Optimize
             current_token: Token {
                 kind: TokenKind::Illegal,
-                origin: b"",
+                ..Default::default()
             },
             peek_token: Token {
                 kind: TokenKind::Illegal,
-                origin: b"",
+                ..Default::default()
             },
         };
 
