@@ -1,25 +1,18 @@
-use std::borrow::Cow;
-
 pub mod ast;
 pub mod error;
 pub mod parser;
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct TokenLiteral<'a>(Cow<'a, [u8]>);
-
-impl std::fmt::Display for TokenLiteral<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = std::str::from_utf8(&self.0).unwrap_or("non UTF-8 literal");
-
-        write!(f, "{}", value)
-    }
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Token<'a> {
+    pub kind: TokenKind,
+    pub origin: &'a [u8],
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Token<'a> {
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum TokenKind {
     // Values
-    String(TokenLiteral<'a>),
-    Number(TokenLiteral<'a>),
+    String,
+    Number,
     True,
     False,
     Null,
@@ -34,56 +27,34 @@ pub enum Token<'a> {
     Eof,
 }
 
-impl std::fmt::Display for Token<'_> {
+impl std::fmt::Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value = match self {
-            Token::String(literal) | Token::Number(literal) => &literal.to_string(),
-            Token::True => "true",
-            Token::False => "false",
-            Token::Null => "null",
-            Token::LBrace => "{",
-            Token::RBrace => "}",
-            Token::LBracket => "[",
-            Token::RBracket => "]",
-            Token::Colon => ":",
-            Token::Comma => ",",
-            Token::Illegal => "Illegal",
-            Token::Eof => "Eof",
+            TokenKind::String => "string",
+            TokenKind::Number => "number",
+            TokenKind::True => "true",
+            TokenKind::False => "false",
+            TokenKind::Null => "null",
+            TokenKind::LBrace => "{",
+            TokenKind::RBrace => "}",
+            TokenKind::LBracket => "[",
+            TokenKind::RBracket => "]",
+            TokenKind::Colon => ":",
+            TokenKind::Comma => ",",
+            TokenKind::Illegal => "Illegal",
+            TokenKind::Eof => "Eof",
         };
 
         write!(f, "'{value}'")
     }
 }
 
-impl Token<'_> {
-    fn into_owned(self) -> Token<'static> {
-        match self {
-            Token::String(token_literal) | Token::Number(token_literal) => {
-                let inner = token_literal.0.into_owned();
-
-                Token::String(TokenLiteral(Cow::Owned(inner)))
-            }
-            Token::True => Token::True,
-            Token::False => Token::False,
-            Token::Null => Token::Null,
-            Token::LBrace => Token::LBrace,
-            Token::RBrace => Token::RBrace,
-            Token::LBracket => Token::LBracket,
-            Token::RBracket => Token::RBracket,
-            Token::Colon => Token::Colon,
-            Token::Comma => Token::Comma,
-            Token::Illegal => Token::Illegal,
-            Token::Eof => Token::Eof,
-        }
-    }
-}
-
 #[derive(Debug)]
 struct Lexer<'a> {
     input: &'a [u8],
-    position: usize,
-    read_position: usize,
-    ch: Option<u8>,
+    position: usize,      // current position in input (points to current char)
+    read_position: usize, // current reading position in input (after current char)
+    ch: Option<u8>,       // current char under examination
 }
 
 impl<'a> Lexer<'a> {
@@ -160,104 +131,163 @@ impl<'a> Lexer<'a> {
             self.read_char();
 
             match self.ch {
-                Some(b'"') | None => break,
+                Some(b'"') | None => {
+                    self.read_char();
+                    break;
+                }
                 Some(b'\\') if self.peek_char() == Some(b'"') => self.read_char(),
                 _ => continue,
             };
         }
 
-        &self.input[start_pos..self.position]
+        &self.input[start_pos..self.position - 1]
     }
 
     fn next_token(&mut self) -> Token<'a> {
         self.skip_whitespace();
 
-        let token = match self.ch {
-            Some(b'{') => Token::LBrace,
-            Some(b'}') => Token::RBrace,
-            Some(b'[') => Token::LBracket,
-            Some(b']') => Token::RBracket,
-            Some(b':') => Token::Colon,
-            Some(b',') => Token::Comma,
+        let kind = match self.ch {
+            Some(b'{') => TokenKind::LBrace,
+            Some(b'}') => TokenKind::RBrace,
+            Some(b'[') => TokenKind::LBracket,
+            Some(b']') => TokenKind::RBracket,
+            Some(b':') => TokenKind::Colon,
+            Some(b',') => TokenKind::Comma,
             Some(b'"') => {
                 let str = self.read_string();
 
-                Token::String(TokenLiteral(Cow::Borrowed(str)))
+                return Token {
+                    kind: TokenKind::String,
+                    origin: str,
+                };
             }
             Some(other) if other.is_ascii_alphabetic() => {
                 let ident = self.read_ident();
 
-                return match ident {
-                    b"true" => Token::True,
-                    b"false" => Token::False,
-                    b"null" => Token::Null,
-                    _ => Token::Illegal,
+                let kind = match ident {
+                    b"true" => TokenKind::True,
+                    b"false" => TokenKind::False,
+                    b"null" => TokenKind::Null,
+                    _ => TokenKind::Illegal,
+                };
+
+                return Token {
+                    kind,
+                    origin: ident,
                 };
             }
             Some(other) if other.is_ascii_digit() => {
                 let num = self.read_number();
 
-                return Token::Number(TokenLiteral(Cow::Borrowed(num)));
+                return Token {
+                    kind: TokenKind::Number,
+                    origin: num,
+                };
             }
-            _ if self.read_position > self.input.len() => Token::Eof,
-            _ => Token::Illegal,
+            _ if self.read_position > self.input.len() => {
+                return Token {
+                    kind: TokenKind::Eof,
+                    origin: b"",
+                }
+            }
+            _ => TokenKind::Illegal,
         };
+
+        let origin = &self.input[self.position..self.read_position];
 
         self.read_char();
 
-        token
+        Token { kind, origin }
     }
+}
+
+macro_rules! tok {
+    (s $string:literal) => {
+        Token {
+            kind: TokenKind::String,
+            origin: $string.as_bytes(),
+        }
+    };
+    (n $number:literal) => {
+        Token {
+            kind: TokenKind::Number,
+            origin: stringify!($number).as_bytes(),
+        }
+    };
+    (true) => {
+        Token {
+            kind: TokenKind::True,
+            origin: b"true",
+        }
+    };
+    (false) => {
+        Token {
+            kind: TokenKind::False,
+            origin: b"false",
+        }
+    };
+    (null) => {
+        Token {
+            kind: TokenKind::Null,
+            origin: b"null",
+        }
+    };
+    ('{') => {
+        Token {
+            kind: TokenKind::LBrace,
+            origin: b"{",
+        }
+    };
+    ('}') => {
+        Token {
+            kind: TokenKind::RBrace,
+            origin: b"}",
+        }
+    };
+    ('[') => {
+        Token {
+            kind: TokenKind::LBracket,
+            origin: b"[",
+        }
+    };
+    (']') => {
+        Token {
+            kind: TokenKind::RBracket,
+            origin: b"]",
+        }
+    };
+    (':') => {
+        Token {
+            kind: TokenKind::Colon,
+            origin: b":",
+        }
+    };
+    (',') => {
+        Token {
+            kind: TokenKind::Comma,
+            origin: b",",
+        }
+    };
+    (Illegal) => {
+        Token {
+            kind: TokenKind::Illegal,
+            origin: b"Illegal",
+        }
+    };
+    (Eof) => {
+        Token {
+            kind: TokenKind::Eof,
+            origin: b"",
+        }
+    };
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    macro_rules! tok {
-        ('{') => {
-            Token::LBrace
-        };
-        ('}') => {
-            Token::RBrace
-        };
-        ('[') => {
-            Token::LBracket
-        };
-        (']') => {
-            Token::RBracket
-        };
-        (':') => {
-            Token::Colon
-        };
-        (',') => {
-            Token::Comma
-        };
-        (true) => {
-            Token::True
-        };
-        (false) => {
-            Token::False
-        };
-        (null) => {
-            Token::Null
-        };
-        (Eof) => {
-            Token::Eof
-        };
-    }
-    macro_rules! tok_str {
-        ($str:literal) => {
-            Token::String(TokenLiteral(Cow::Borrowed($str.as_bytes())))
-        };
-    }
-    macro_rules! tok_num {
-        ($num:literal) => {
-            Token::Number(TokenLiteral(Cow::Borrowed(stringify!($num).as_bytes())))
-        };
-    }
-
     #[test]
-    fn parse_simple() {
+    fn tokenize_simple() {
         let json = r#"
 {
 	"string": "Hello, world!",
@@ -279,76 +309,76 @@ mod tests {
 
         let expected_tokens = [
             tok!('{'),
-            tok_str!("string"),
+            tok!(s "string"),
             tok!(':'),
-            tok_str!("Hello, world!"),
+            tok!(s "Hello, world!"),
             tok!(','),
-            tok_str!("number"),
+            tok!(s "number"),
             tok!(':'),
-            tok_num!(42),
+            tok!(n 42),
             tok!(','),
-            tok_str!("boolean"),
+            tok!(s "boolean"),
             tok!(':'),
             tok!(true),
             tok!(','),
-            tok_str!("null"),
+            tok!(s "null"),
             tok!(':'),
             tok!(null),
             tok!(','),
-            tok_str!("array"),
+            tok!(s "array"),
             tok!(':'),
             tok!('['),
-            tok_num!(1),
+            tok!(n 1),
             tok!(','),
-            tok_num!(2),
+            tok!(n 2),
             tok!(','),
-            tok_num!(3),
+            tok!(n 3),
             tok!(','),
-            tok_num!(4),
+            tok!(n 4),
             tok!(','),
-            tok_str!("five"),
+            tok!(s "five"),
             tok!(','),
             tok!(true),
             tok!(']'),
             tok!(','),
-            tok_str!("nested_object"),
+            tok!(s "nested_object"),
             tok!(':'),
             tok!('{'),
-            tok_str!("nested_string"),
+            tok!(s "nested_string"),
             tok!(':'),
-            tok_str!("This is a nested string"),
+            tok!(s "This is a nested string"),
             tok!(','),
-            tok_str!("nested_number"),
+            tok!(s "nested_number"),
             tok!(':'),
-            tok_num!(100),
+            tok!(n 100),
             tok!(','),
-            tok_str!("nested_array"),
+            tok!(s "nested_array"),
             tok!(':'),
             tok!('['),
-            tok_num!(10),
+            tok!(n 10),
             tok!(','),
-            tok_num!(20),
+            tok!(n 20),
             tok!(','),
-            tok_num!(30),
+            tok!(n 30),
             tok!(']'),
             tok!(','),
-            tok_str!("nested_boolean"),
+            tok!(s "nested_boolean"),
             tok!(':'),
             tok!(false),
             tok!('}'),
             tok!(','),
-            tok_str!("another_nested_object"),
+            tok!(s "another_nested_object"),
             tok!(':'),
             tok!('{'),
-            tok_str!("level1"),
+            tok!(s "level1"),
             tok!(':'),
             tok!('{'),
-            tok_str!("level2"),
+            tok!(s "level2"),
             tok!(':'),
             tok!('{'),
-            tok_str!("key"),
+            tok!(s "key"),
             tok!(':'),
-            tok_str!("value"),
+            tok!(s "value"),
             tok!('}'),
             tok!('}'),
             tok!('}'),
@@ -362,16 +392,16 @@ mod tests {
     }
 
     #[test]
-    fn parse_escaped() {
+    fn tokenize_escaped() {
         let json = r#"{"key":"Hello, \"world!\""}"#;
 
         let mut lexer = Lexer::new(json.as_bytes());
 
         let expected_tokens = [
             tok!('{'),
-            tok_str!("key"),
+            tok!(s "key"),
             tok!(':'),
-            tok_str!(r#"Hello, \"world!\""#),
+            tok!(s r#"Hello, \"world!\""#),
             tok!('}'),
         ];
 

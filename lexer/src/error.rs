@@ -1,4 +1,4 @@
-use crate::Token;
+use crate::TokenKind;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Error {
@@ -26,8 +26,8 @@ impl std::error::Error for Error {}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExpectedTokenError {
-    pub expected: Vec<Token<'static>>,
-    pub actual: Token<'static>,
+    pub expected: Vec<TokenKind>,
+    pub actual: TokenKind,
 }
 
 impl std::fmt::Display for ExpectedTokenError {

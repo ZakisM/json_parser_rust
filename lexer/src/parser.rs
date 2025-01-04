@@ -1,7 +1,7 @@
 use crate::{
     ast::{JsonProperty, JsonValue},
     error::ExpectedTokenError,
-    Lexer, Token, TokenLiteral,
+    Lexer, Token, TokenKind,
 };
 
 #[derive(Debug)]
@@ -11,36 +11,19 @@ pub struct Parser<'a> {
     peek_token: Token<'a>,
 }
 
-macro_rules! expect_token {
-    ($self:expr, $variant:ident) => {
-        $self.expect_peek(Token::$variant)?;
-    };
-    ($self:expr, $variant:ident()) => {{
-        $self.expect_peek(Token::$variant(Default::default()))?;
-
-        let Token::$variant(value) = $self.current_token.clone() else {
-            unreachable!();
-        };
-
-        value
-    }};
-}
-
-macro_rules! expected_token_err {
-    ($token:expr, $( $variant:ident )|+) => {
-        return Err(ExpectedTokenError {
-            expected: vec![$(Token::$variant),+],
-            actual: $token.clone().into_owned(),
-        })
-    };
-}
-
 impl<'a> Parser<'a> {
     fn new(input: &'a [u8]) -> Self {
         let mut parser = Self {
             lexer: Lexer::new(input),
-            current_token: Token::Illegal,
-            peek_token: Token::Illegal,
+            // TODO: Optimize
+            current_token: Token {
+                kind: TokenKind::Illegal,
+                origin: b"",
+            },
+            peek_token: Token {
+                kind: TokenKind::Illegal,
+                origin: b"",
+            },
         };
 
         parser.next_token();
@@ -49,15 +32,15 @@ impl<'a> Parser<'a> {
     }
 
     fn next_token(&mut self) {
-        self.current_token = self.peek_token.clone();
+        self.current_token = self.peek_token;
         self.peek_token = self.lexer.next_token();
     }
 
-    fn expect_peek(&mut self, expected: Token<'a>) -> Result<(), ExpectedTokenError> {
-        if std::mem::discriminant(&self.peek_token) != std::mem::discriminant(&expected) {
+    fn expect_peek(&mut self, expected: TokenKind) -> Result<(), ExpectedTokenError> {
+        if self.peek_token.kind != expected {
             return Err(ExpectedTokenError {
-                expected: vec![expected.clone().into_owned()],
-                actual: self.peek_token.clone().into_owned(),
+                expected: vec![expected],
+                actual: self.peek_token.kind.clone(),
             });
         }
 
@@ -66,21 +49,22 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn parse_string(&self, literal: TokenLiteral<'a>) -> Result<JsonValue, ExpectedTokenError> {
-        let s = String::from_utf8(literal.0.into_owned()).unwrap();
+    fn parse_string(&self, literal: &'a [u8]) -> Result<JsonValue, ExpectedTokenError> {
+        // TODO: Cow
+        let literal = String::from_utf8(literal.to_vec()).unwrap();
 
-        Ok(JsonValue::String(s))
+        Ok(JsonValue::String(literal))
     }
 
-    fn parse_number(&self, literal: TokenLiteral<'a>) -> Result<JsonValue, ExpectedTokenError> {
-        let s = std::str::from_utf8(&literal.0).unwrap();
-        let n = s.parse::<usize>().unwrap();
+    fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue, ExpectedTokenError> {
+        let s = std::str::from_utf8(literal).unwrap();
+        let n = s.parse::<usize>().expect("literal must be a number");
 
         Ok(JsonValue::Number(n))
     }
 
     fn parse_array(&mut self) -> Result<JsonValue, ExpectedTokenError> {
-        expect_token!(self, LBracket);
+        self.expect_peek(TokenKind::LBracket)?;
 
         let mut items = Vec::new();
 
@@ -88,11 +72,12 @@ impl<'a> Parser<'a> {
             let value = self.parse_value()?;
             items.push(value);
 
-            match self.peek_token {
-                Token::Comma => self.next_token(),
-                Token::RBracket => break,
+            match self.peek_token.kind {
+                TokenKind::Comma => self.next_token(),
+                TokenKind::RBracket => break,
                 _ => {
-                    expected_token_err!(self.peek_token, Comma | RBracket)
+                    // expected_token_err!(self.peek_token, Comma | RBracket)
+                    panic!()
                 }
             }
         }
@@ -101,26 +86,26 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_value(&mut self) -> Result<JsonValue, ExpectedTokenError> {
-        let value = match self.peek_token.clone() {
-            Token::String(literal) => self.parse_string(literal)?,
-            Token::Number(literal) => self.parse_number(literal)?,
-            Token::True => JsonValue::Boolean(true),
-            Token::False => JsonValue::Boolean(false),
-            Token::Null => JsonValue::Null,
-            Token::LBrace => self.parse_object()?,
-            Token::LBracket => self.parse_array()?,
+        let value = match self.peek_token.kind {
+            TokenKind::String => self.parse_string(self.peek_token.origin)?,
+            TokenKind::Number => self.parse_number(self.peek_token.origin)?,
+            TokenKind::True => JsonValue::Boolean(true),
+            TokenKind::False => JsonValue::Boolean(false),
+            TokenKind::Null => JsonValue::Null,
+            TokenKind::LBrace => self.parse_object()?,
+            TokenKind::LBracket => self.parse_array()?,
             _ => {
                 return Err(ExpectedTokenError {
                     expected: vec![
-                        Token::String(Default::default()),
-                        Token::Number(Default::default()),
-                        Token::True,
-                        Token::False,
-                        Token::Null,
-                        Token::LBrace,
-                        Token::LBracket,
+                        TokenKind::String,
+                        TokenKind::Number,
+                        TokenKind::True,
+                        TokenKind::False,
+                        TokenKind::Null,
+                        TokenKind::LBrace,
+                        TokenKind::LBracket,
                     ],
-                    actual: self.peek_token.clone().into_owned(),
+                    actual: self.peek_token.kind,
                 });
             }
         };
@@ -130,10 +115,13 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_property(&mut self) -> Result<JsonProperty, ExpectedTokenError> {
-        let key_token = expect_token!(self, String());
-        let key = String::from_utf8(key_token.0.into_owned()).unwrap();
+        self.expect_peek(TokenKind::String)?;
 
-        expect_token!(self, Colon);
+        let key_token = self.current_token.origin;
+
+        let key = String::from_utf8(key_token.to_vec()).unwrap();
+
+        self.expect_peek(TokenKind::Colon)?;
 
         let value = self.parse_value()?;
 
@@ -141,7 +129,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_object(&mut self) -> Result<JsonValue, ExpectedTokenError> {
-        expect_token!(self, LBrace);
+        self.expect_peek(TokenKind::LBrace)?;
 
         let mut items = Vec::new();
 
@@ -149,11 +137,12 @@ impl<'a> Parser<'a> {
             let item = self.parse_property()?;
             items.push(item);
 
-            match self.peek_token {
-                Token::Comma => self.next_token(),
-                Token::RBrace => break,
+            match self.peek_token.kind {
+                TokenKind::Comma => self.next_token(),
+                TokenKind::RBrace => break,
                 _ => {
-                    expected_token_err!(self.peek_token, Comma | RBrace)
+                    // expected_token_err!(self.peek_token, Comma | RBrace)
+                    panic!()
                 }
             }
         }
@@ -167,10 +156,11 @@ impl<'a> Parser<'a> {
         self.next_token();
 
         if !matches!(
-            (&self.current_token, &self.peek_token),
-            (Token::RBrace, Token::Eof)
+            (&self.current_token.kind, &self.peek_token.kind),
+            (TokenKind::RBrace, TokenKind::Eof)
         ) {
-            expected_token_err!(self.current_token, Eof)
+            // expected_token_err!(self.current_token, Eof)
+            panic!()
         }
 
         Ok(result)
