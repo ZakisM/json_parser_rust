@@ -1,5 +1,5 @@
 [workspace]
-members = ["lexer"]
+members = ["json_parser"]
 
 [package]
 name = "json_parser_rust"
@@ -10,7 +10,7 @@ edition = "2021"
 target = "x86_64-pc-windows-msvc"
 
 [dependencies]
-lexer = { path = "./lexer" }
+json_parser = { path = "./json_parser" }
 
 [lib]
 crate-type = ["cdylib"]
