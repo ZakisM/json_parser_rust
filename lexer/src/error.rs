@@ -1,4 +1,4 @@
-use crate::TokenKind;
+use crate::token::TokenKind;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Error {

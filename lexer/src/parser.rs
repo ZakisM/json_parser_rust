@@ -1,8 +1,23 @@
 use crate::{
     ast::{JsonProperty, JsonValue},
     error::ExpectedTokenError,
-    Lexer, Token, TokenKind,
+    token::{Lexer, Token, TokenKind},
 };
+
+macro_rules! expected_token_err {
+    ($self:expr, $token:path) => {
+        return Err(ExpectedTokenError {
+            expected: vec![$token],
+            actual: $self.kind,
+        })
+    };
+    ($self:expr, $( $variant:ident )|+) => {
+        return Err(ExpectedTokenError {
+            expected: vec![$(TokenKind::$variant),+],
+            actual: $self.kind,
+        })
+    };
+}
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -31,10 +46,7 @@ impl<'a> Parser<'a> {
 
     fn expect_peek(&mut self, expected: TokenKind) -> Result<(), ExpectedTokenError> {
         if self.peek_token.kind != expected {
-            return Err(ExpectedTokenError {
-                expected: vec![expected],
-                actual: self.peek_token.kind,
-            });
+            expected_token_err!(self.peek_token, expected)
         }
 
         self.next_token();
@@ -42,12 +54,14 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
+    // TODO: Result here?
     fn parse_string(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let s = std::str::from_utf8(literal).expect("literal must be a string");
 
         Ok(JsonValue::String(s))
     }
 
+    // TODO: Result here?
     fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let s = std::str::from_utf8(literal).expect("literal must be a string");
         let n = s.parse::<usize>().expect("literal must be a number");
@@ -68,8 +82,7 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBracket => break,
                 _ => {
-                    // expected_token_err!(self.peek_token, Comma | RBracket)
-                    panic!()
+                    expected_token_err!(self.peek_token, Comma | RBracket)
                 }
             }
         }
@@ -87,18 +100,10 @@ impl<'a> Parser<'a> {
             TokenKind::LBrace => self.parse_object()?,
             TokenKind::LBracket => self.parse_array()?,
             _ => {
-                return Err(ExpectedTokenError {
-                    expected: vec![
-                        TokenKind::String,
-                        TokenKind::Number,
-                        TokenKind::True,
-                        TokenKind::False,
-                        TokenKind::Null,
-                        TokenKind::LBrace,
-                        TokenKind::LBracket,
-                    ],
-                    actual: self.peek_token.kind,
-                });
+                expected_token_err!(
+                    self.peek_token,
+                    String | Number | True | False | Null | LBrace | LBracket
+                )
             }
         };
         self.next_token();
@@ -109,7 +114,7 @@ impl<'a> Parser<'a> {
     fn parse_property(&mut self) -> Result<JsonProperty<'a>, ExpectedTokenError> {
         self.expect_peek(TokenKind::String)?;
 
-        let key = std::str::from_utf8(self.current_token.origin).unwrap();
+        let key = std::str::from_utf8(self.current_token.origin).expect("literal must be a string");
 
         self.expect_peek(TokenKind::Colon)?;
 
@@ -131,8 +136,7 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBrace => break,
                 _ => {
-                    // expected_token_err!(self.peek_token, Comma | RBrace)
-                    panic!()
+                    expected_token_err!(self.peek_token, Comma | RBrace)
                 }
             }
         }
@@ -149,8 +153,7 @@ impl<'a> Parser<'a> {
             (&self.current_token.kind, &self.peek_token.kind),
             (TokenKind::RBrace, TokenKind::Eof)
         ) {
-            // expected_token_err!(self.current_token, Eof)
-            panic!()
+            expected_token_err!(self.current_token, TokenKind::Eof)
         }
 
         Ok(result)
