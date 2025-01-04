@@ -15,15 +15,8 @@ impl<'a> Parser<'a> {
     fn new(input: &'a [u8]) -> Self {
         let mut parser = Self {
             lexer: Lexer::new(input),
-            // TODO: Optimize
-            current_token: Token {
-                kind: TokenKind::Illegal,
-                ..Default::default()
-            },
-            peek_token: Token {
-                kind: TokenKind::Illegal,
-                ..Default::default()
-            },
+            current_token: Token::default(),
+            peek_token: Token::default(),
         };
 
         parser.next_token();
@@ -40,7 +33,7 @@ impl<'a> Parser<'a> {
         if self.peek_token.kind != expected {
             return Err(ExpectedTokenError {
                 expected: vec![expected],
-                actual: self.peek_token.kind.clone(),
+                actual: self.peek_token.kind,
             });
         }
 
@@ -117,9 +110,8 @@ impl<'a> Parser<'a> {
     fn parse_property(&mut self) -> Result<JsonProperty, ExpectedTokenError> {
         self.expect_peek(TokenKind::String)?;
 
-        let key_token = self.current_token.origin;
-
-        let key = String::from_utf8(key_token.to_vec()).unwrap();
+        let key = self.current_token.origin;
+        let key = String::from_utf8(key.to_vec()).unwrap();
 
         self.expect_peek(TokenKind::Colon)?;
 
