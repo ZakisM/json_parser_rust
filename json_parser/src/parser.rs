@@ -27,7 +27,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    fn new(input: &'a [u8]) -> Self {
+    pub fn new(input: &'a [u8]) -> Self {
         let mut parser = Self {
             lexer: Lexer::new(input),
             current_token: Token::default(),
@@ -174,7 +174,7 @@ impl<'a> Parser<'a> {
         Ok(result)
     }
 
-    fn parse(mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
+    pub fn parse(mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         match self.peek_token.kind {
             TokenKind::LBrace => self.parse_root_object(),
             TokenKind::LBracket => self.parse_root_array(),
