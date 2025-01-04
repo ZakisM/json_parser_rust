@@ -69,27 +69,6 @@ impl<'a> Parser<'a> {
         Ok(JsonValue::Number(n))
     }
 
-    fn parse_array(&mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        self.expect_peek(TokenKind::LBracket)?;
-
-        let mut items = Vec::new();
-
-        loop {
-            let value = self.parse_value()?;
-            items.push(value);
-
-            match self.peek_token.kind {
-                TokenKind::Comma => self.next_token(),
-                TokenKind::RBracket => break,
-                _ => {
-                    expected_token_err!(self.peek_token, Comma | RBracket)
-                }
-            }
-        }
-
-        Ok(JsonValue::Array(items))
-    }
-
     fn parse_value(&mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let value = match self.peek_token.kind {
             TokenKind::String => self.parse_string(self.peek_token.origin)?,
@@ -123,6 +102,27 @@ impl<'a> Parser<'a> {
         Ok(JsonProperty::from((key, value)))
     }
 
+    fn parse_array(&mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        self.expect_peek(TokenKind::LBracket)?;
+
+        let mut items = Vec::new();
+
+        loop {
+            let value = self.parse_value()?;
+            items.push(value);
+
+            match self.peek_token.kind {
+                TokenKind::Comma => self.next_token(),
+                TokenKind::RBracket => break,
+                _ => {
+                    expected_token_err!(self.peek_token, Comma | RBracket)
+                }
+            }
+        }
+
+        Ok(JsonValue::Array(items))
+    }
+
     fn parse_object(&mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         self.expect_peek(TokenKind::LBrace)?;
 
@@ -144,7 +144,7 @@ impl<'a> Parser<'a> {
         Ok(JsonValue::Object(items))
     }
 
-    fn parse(mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
+    fn parse_root_object(mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let result = self.parse_object()?;
 
         self.next_token();
@@ -158,6 +158,29 @@ impl<'a> Parser<'a> {
 
         Ok(result)
     }
+
+    fn parse_root_array(mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        let result = self.parse_array()?;
+
+        self.next_token();
+
+        if !matches!(
+            (&self.current_token.kind, &self.peek_token.kind),
+            (TokenKind::RBracket, TokenKind::Eof)
+        ) {
+            expected_token_err!(self.current_token, TokenKind::Eof)
+        }
+
+        Ok(result)
+    }
+
+    fn parse(mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        match self.peek_token.kind {
+            TokenKind::LBrace => self.parse_root_object(),
+            TokenKind::LBracket => self.parse_root_array(),
+            _ => expected_token_err!(self.current_token, LBrace | LBracket),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -165,7 +188,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_simple() {
+    fn parse_top_level_object() {
         let json = r#"
 {
 	"string": "Hello, world!",
@@ -218,6 +241,28 @@ mod tests {
                 )),
                 JsonProperty::from(("boolean", JsonValue::Boolean(true)))
             ]))
+        );
+    }
+
+    #[test]
+    fn parse_top_level_array() {
+        let json = r#"
+[
+    {
+        "one": 1,
+        "two": 2
+    }
+]
+"#;
+
+        let parser = Parser::new(json.as_bytes());
+
+        assert_eq!(
+            parser.parse(),
+            Ok(JsonValue::Array(vec![JsonValue::Object(vec![
+                JsonProperty::from(("one", JsonValue::Number(1))),
+                JsonProperty::from(("two", JsonValue::Number(2)))
+            ])]))
         );
     }
 }
