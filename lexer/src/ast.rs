@@ -36,57 +36,57 @@ impl<'a> JsonValue<'a> {
             JsonValue::Object(_) => "Object".to_string(),
         }
     }
-}
 
-fn to_flattened(root: JsonValue) -> BTreeMap<Cow<'_, str>, String> {
-    let mut res = BTreeMap::new();
+    pub fn as_flattened(&'a self) -> BTreeMap<Cow<'a, str>, String> {
+        let mut res = BTreeMap::new();
 
-    match root {
-        JsonValue::Object(root_properties) => {
-            for root_prop in root_properties {
-                let mut stack = vec![root_prop.clone()];
+        match self {
+            JsonValue::Object(root_properties) => {
+                for root_prop in root_properties {
+                    let mut stack = vec![root_prop.clone()];
 
-                while let Some(root_prop) = stack.pop() {
-                    match root_prop.value {
-                        JsonValue::Object(object) => {
-                            for nested_prop in object.into_iter() {
-                                let prop = JsonProperty {
-                                    key: Cow::Owned(format!(
-                                        "{}.{}",
-                                        root_prop.key.clone().into_owned(),
-                                        nested_prop.key
-                                    )),
-                                    value: nested_prop.value,
-                                };
+                    while let Some(root_prop) = stack.pop() {
+                        match root_prop.value {
+                            JsonValue::Object(object) => {
+                                for nested_prop in object.into_iter() {
+                                    let prop = JsonProperty {
+                                        key: Cow::Owned(format!(
+                                            "{}.{}",
+                                            root_prop.key.clone().into_owned(),
+                                            nested_prop.key
+                                        )),
+                                        value: nested_prop.value,
+                                    };
 
-                                stack.push(prop);
+                                    stack.push(prop);
+                                }
                             }
-                        }
-                        JsonValue::Array(array) => {
-                            for (index, nested_value) in array.into_iter().enumerate() {
-                                let prop = JsonProperty {
-                                    key: Cow::Owned(format!(
-                                        "{}.{:03}",
-                                        root_prop.key.clone().into_owned(),
-                                        index
-                                    )),
-                                    value: nested_value,
-                                };
+                            JsonValue::Array(array) => {
+                                for (index, nested_value) in array.into_iter().enumerate() {
+                                    let prop = JsonProperty {
+                                        key: Cow::Owned(format!(
+                                            "{}.{:03}",
+                                            root_prop.key.clone().into_owned(),
+                                            index
+                                        )),
+                                        value: nested_value,
+                                    };
 
-                                stack.push(prop);
+                                    stack.push(prop);
+                                }
                             }
-                        }
-                        _ => {
-                            res.insert(root_prop.key, root_prop.value.inner_value());
+                            _ => {
+                                res.insert(root_prop.key, root_prop.value.inner_value());
+                            }
                         }
                     }
                 }
             }
+            _ => panic!("expected root to be of type JsonValue::Object"),
         }
-        _ => panic!("expected root to be of type JsonValue::Object"),
-    }
 
-    res
+        res
+    }
 }
 
 #[cfg(test)]
@@ -151,7 +151,7 @@ mod tests {
         ]);
 
         assert_eq!(
-            to_flattened(root),
+            root.as_flattened(),
             BTreeMap::from([
                 ("address.city".into(), "New York".into()),
                 ("address.street.number".into(), "95".into()),
