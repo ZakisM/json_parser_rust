@@ -1,21 +1,21 @@
-use std::collections::BTreeMap;
+use std::{borrow::Cow, collections::BTreeMap};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JsonProperty<'a> {
-    pub key: &'a str,
+    pub key: Cow<'a, str>,
     pub value: JsonValue<'a>,
 }
 
 impl<'a> From<(&'a str, JsonValue<'a>)> for JsonProperty<'a> {
     fn from(item: (&'a str, JsonValue<'a>)) -> Self {
         Self {
-            key: item.0,
+            key: item.0.into(),
             value: item.1,
         }
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum JsonValue<'a> {
     Null,
     Boolean(bool),
@@ -38,33 +38,52 @@ impl<'a> JsonValue<'a> {
     }
 }
 
-fn to_flattened(root: &JsonValue, prefix: Option<String>) -> BTreeMap<String, String> {
+fn to_flattened(root: JsonValue) -> BTreeMap<Cow<'_, str>, String> {
     let mut res = BTreeMap::new();
 
     match root {
-        JsonValue::Object(entries) => {
-            for item in entries {
-                let key = prefix
-                    .as_ref()
-                    .map_or_else(|| item.key.to_owned(), |pre| format!("{pre}.{}", item.key));
+        JsonValue::Object(root_properties) => {
+            for root_prop in root_properties {
+                let mut stack = vec![root_prop.clone()];
 
-                res.extend(to_flattened(&item.value, Some(key)));
+                while let Some(root_prop) = stack.pop() {
+                    match root_prop.value {
+                        JsonValue::Object(object) => {
+                            for nested_prop in object.into_iter() {
+                                let prop = JsonProperty {
+                                    key: Cow::Owned(format!(
+                                        "{}.{}",
+                                        root_prop.key.clone().into_owned(),
+                                        nested_prop.key
+                                    )),
+                                    value: nested_prop.value,
+                                };
+
+                                stack.push(prop);
+                            }
+                        }
+                        JsonValue::Array(array) => {
+                            for (index, nested_value) in array.into_iter().enumerate() {
+                                let prop = JsonProperty {
+                                    key: Cow::Owned(format!(
+                                        "{}.{:03}",
+                                        root_prop.key.clone().into_owned(),
+                                        index
+                                    )),
+                                    value: nested_value,
+                                };
+
+                                stack.push(prop);
+                            }
+                        }
+                        _ => {
+                            res.insert(root_prop.key, root_prop.value.inner_value());
+                        }
+                    }
+                }
             }
         }
-        JsonValue::Array(array) => {
-            let prefix = prefix.expect("prefix must be present");
-
-            for (index, item) in array.iter().enumerate() {
-                let key = format!("{prefix}.{:03}", index);
-
-                res.extend(to_flattened(item, Some(key)));
-            }
-        }
-        _ => {
-            let prefix = prefix.expect("prefix must be present");
-
-            res.insert(prefix, root.inner_value());
-        }
+        _ => panic!("expected root to be of type JsonValue::Object"),
     }
 
     res
@@ -83,7 +102,13 @@ mod tests {
             JsonProperty::from((
                 "address",
                 JsonValue::Object(vec![
-                    JsonProperty::from(("street", JsonValue::String("123 Main St"))),
+                    JsonProperty::from((
+                        "street",
+                        JsonValue::Object(vec![JsonProperty::from((
+                            "number",
+                            JsonValue::Number(95),
+                        ))]),
+                    )),
                     JsonProperty::from(("city", JsonValue::String("New York"))),
                     JsonProperty::from(("zipcode", JsonValue::Null)),
                 ]),
@@ -126,31 +151,25 @@ mod tests {
         ]);
 
         assert_eq!(
-            to_flattened(&root, None),
+            to_flattened(root),
             BTreeMap::from([
-                ("address.city".to_owned(), "New York".to_owned()),
-                ("address.street".to_owned(), "123 Main St".to_owned()),
-                ("address.zipcode".to_owned(), "null".to_owned()),
-                ("age".to_owned(), "30".to_owned()),
-                ("courses.000.courseName".to_owned(), "Math".to_owned()),
-                ("courses.000.grade".to_owned(), "A".to_owned()),
-                ("courses.001.courseName".to_owned(), "Science".to_owned()),
-                ("courses.001.grade".to_owned(), "B".to_owned()),
-                ("isStudent".to_owned(), "false".to_owned()),
-                (
-                    "metadata.createdAt".to_owned(),
-                    "2023-10-01T12:34:56Z".to_owned()
-                ),
-                (
-                    "metadata.updatedAt".to_owned(),
-                    "2023-10-01T12:34:56Z".to_owned()
-                ),
-                ("name".to_owned(), "John".to_owned()),
-                ("preferences.notifications".to_owned(), "true".to_owned()),
-                ("preferences.theme".to_owned(), "dark".to_owned()),
-                ("scores.000".to_owned(), "95".to_owned()),
-                ("scores.001".to_owned(), "88".to_owned()),
-                ("scores.002".to_owned(), "76".to_owned()),
+                ("address.city".into(), "New York".into()),
+                ("address.street.number".into(), "95".into()),
+                ("address.zipcode".into(), "null".into()),
+                ("age".into(), "30".into()),
+                ("courses.000.courseName".into(), "Math".into()),
+                ("courses.000.grade".into(), "A".into()),
+                ("courses.001.courseName".into(), "Science".into()),
+                ("courses.001.grade".into(), "B".into()),
+                ("isStudent".into(), "false".into()),
+                ("metadata.createdAt".into(), "2023-10-01T12:34:56Z".into()),
+                ("metadata.updatedAt".into(), "2023-10-01T12:34:56Z".into()),
+                ("name".into(), "John".into()),
+                ("preferences.notifications".into(), "true".into()),
+                ("preferences.theme".into(), "dark".into()),
+                ("scores.000".into(), "95".into()),
+                ("scores.001".into(), "88".into()),
+                ("scores.002".into(), "76".into()),
             ])
         );
     }
