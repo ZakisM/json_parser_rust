@@ -125,6 +125,33 @@ mod tests {
             )),
         ]);
 
-        dbg!(&to_flattened(&root, None));
+        assert_eq!(
+            to_flattened(&root, None),
+            BTreeMap::from([
+                ("address.city".to_owned(), "New York".to_owned()),
+                ("address.street".to_owned(), "123 Main St".to_owned()),
+                ("address.zipcode".to_owned(), "null".to_owned()),
+                ("age".to_owned(), "30".to_owned()),
+                ("courses.000.courseName".to_owned(), "Math".to_owned()),
+                ("courses.000.grade".to_owned(), "A".to_owned()),
+                ("courses.001.courseName".to_owned(), "Science".to_owned()),
+                ("courses.001.grade".to_owned(), "B".to_owned()),
+                ("isStudent".to_owned(), "false".to_owned()),
+                (
+                    "metadata.createdAt".to_owned(),
+                    "2023-10-01T12:34:56Z".to_owned()
+                ),
+                (
+                    "metadata.updatedAt".to_owned(),
+                    "2023-10-01T12:34:56Z".to_owned()
+                ),
+                ("name".to_owned(), "John".to_owned()),
+                ("preferences.notifications".to_owned(), "true".to_owned()),
+                ("preferences.theme".to_owned(), "dark".to_owned()),
+                ("scores.000".to_owned(), "95".to_owned()),
+                ("scores.001".to_owned(), "88".to_owned()),
+                ("scores.002".to_owned(), "76".to_owned()),
+            ])
+        );
     }
 }
