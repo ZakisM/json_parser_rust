@@ -42,21 +42,20 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn parse_string(&self, literal: &'a [u8]) -> Result<JsonValue, ExpectedTokenError> {
-        // TODO: Cow
-        let literal = String::from_utf8(literal.to_vec()).unwrap();
+    fn parse_string(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        let s = std::str::from_utf8(literal).expect("literal must be a string");
 
-        Ok(JsonValue::String(literal))
+        Ok(JsonValue::String(s))
     }
 
-    fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue, ExpectedTokenError> {
-        let s = std::str::from_utf8(literal).unwrap();
+    fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        let s = std::str::from_utf8(literal).expect("literal must be a string");
         let n = s.parse::<usize>().expect("literal must be a number");
 
         Ok(JsonValue::Number(n))
     }
 
-    fn parse_array(&mut self) -> Result<JsonValue, ExpectedTokenError> {
+    fn parse_array(&mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         self.expect_peek(TokenKind::LBracket)?;
 
         let mut items = Vec::new();
@@ -78,7 +77,7 @@ impl<'a> Parser<'a> {
         Ok(JsonValue::Array(items))
     }
 
-    fn parse_value(&mut self) -> Result<JsonValue, ExpectedTokenError> {
+    fn parse_value(&mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let value = match self.peek_token.kind {
             TokenKind::String => self.parse_string(self.peek_token.origin)?,
             TokenKind::Number => self.parse_number(self.peek_token.origin)?,
@@ -107,11 +106,10 @@ impl<'a> Parser<'a> {
         Ok(value)
     }
 
-    fn parse_property(&mut self) -> Result<JsonProperty, ExpectedTokenError> {
+    fn parse_property(&mut self) -> Result<JsonProperty<'a>, ExpectedTokenError> {
         self.expect_peek(TokenKind::String)?;
 
-        let key = self.current_token.origin;
-        let key = String::from_utf8(key.to_vec()).unwrap();
+        let key = std::str::from_utf8(self.current_token.origin).unwrap();
 
         self.expect_peek(TokenKind::Colon)?;
 
@@ -120,7 +118,7 @@ impl<'a> Parser<'a> {
         Ok(JsonProperty::from((key, value)))
     }
 
-    fn parse_object(&mut self) -> Result<JsonValue, ExpectedTokenError> {
+    fn parse_object(&mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         self.expect_peek(TokenKind::LBrace)?;
 
         let mut items = Vec::new();
@@ -142,7 +140,7 @@ impl<'a> Parser<'a> {
         Ok(JsonValue::Object(items))
     }
 
-    fn parse(mut self) -> Result<JsonValue, ExpectedTokenError> {
+    fn parse(mut self) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let result = self.parse_object()?;
 
         self.next_token();
@@ -182,20 +180,17 @@ mod tests {
         assert_eq!(
             parser.parse(),
             Ok(JsonValue::Object(vec![
+                JsonProperty::from(("string", JsonValue::String("Hello, world!"))),
+                JsonProperty::from(("number", JsonValue::Number(42))),
                 JsonProperty::from((
-                    "string".to_owned(),
-                    JsonValue::String("Hello, world!".to_owned())
-                )),
-                JsonProperty::from(("number".to_owned(), JsonValue::Number(42))),
-                JsonProperty::from((
-                    "nested_object".to_owned(),
+                    "nested_object",
                     JsonValue::Object(vec![
                         JsonProperty::from((
-                            "nested_string".to_owned(),
-                            JsonValue::String("This is a nested string".to_owned())
+                            "nested_string",
+                            JsonValue::String("This is a nested string")
                         )),
                         JsonProperty::from((
-                            "nested_number".to_owned(),
+                            "nested_number",
                             JsonValue::Array(vec![
                                 JsonValue::Number(100),
                                 JsonValue::Number(200),
@@ -208,7 +203,7 @@ mod tests {
                                         JsonValue::Array(vec![
                                             JsonValue::Number(700),
                                             JsonValue::Object(vec![JsonProperty::from((
-                                                "secret".to_owned(),
+                                                "secret",
                                                 JsonValue::Number(12345)
                                             ))])
                                         ])
@@ -218,7 +213,7 @@ mod tests {
                         ))
                     ])
                 )),
-                JsonProperty::from(("boolean".to_owned(), JsonValue::Boolean(true)))
+                JsonProperty::from(("boolean", JsonValue::Boolean(true)))
             ]))
         );
     }

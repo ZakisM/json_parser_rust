@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct JsonProperty {
-    pub key: String,
-    pub value: JsonValue,
+pub struct JsonProperty<'a> {
+    pub key: &'a str,
+    pub value: JsonValue<'a>,
 }
 
-impl From<(String, JsonValue)> for JsonProperty {
-    fn from(item: (String, JsonValue)) -> Self {
+impl<'a> From<(&'a str, JsonValue<'a>)> for JsonProperty<'a> {
+    fn from(item: (&'a str, JsonValue<'a>)) -> Self {
         Self {
             key: item.0,
             value: item.1,
@@ -16,22 +16,22 @@ impl From<(String, JsonValue)> for JsonProperty {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum JsonValue {
+pub enum JsonValue<'a> {
     Null,
     Boolean(bool),
     Number(usize),
-    String(String),
-    Object(Vec<JsonProperty>),
-    Array(Vec<JsonValue>),
+    String(&'a str),
+    Object(Vec<JsonProperty<'a>>),
+    Array(Vec<JsonValue<'a>>),
 }
 
-impl JsonValue {
+impl<'a> JsonValue<'a> {
     fn inner_value(&self) -> String {
         match self {
             JsonValue::Null => "null".to_owned(),
             JsonValue::Boolean(b) => b.to_string(),
             JsonValue::Number(n) => n.to_string(),
-            JsonValue::String(s) => s.to_owned(),
+            JsonValue::String(s) => s.to_string(),
             JsonValue::Array(_) => "Array".to_string(),
             JsonValue::Object(_) => "Object".to_string(),
         }
@@ -77,51 +77,39 @@ mod tests {
     #[test]
     fn flattened() {
         let root = JsonValue::Object(vec![
-            JsonProperty::from(("name".to_owned(), JsonValue::String("John".to_owned()))),
-            JsonProperty::from(("age".to_owned(), JsonValue::Number(30))),
-            JsonProperty::from(("isStudent".to_owned(), JsonValue::Boolean(false))),
+            JsonProperty::from(("name", JsonValue::String("John"))),
+            JsonProperty::from(("age", JsonValue::Number(30))),
+            JsonProperty::from(("isStudent", JsonValue::Boolean(false))),
             JsonProperty::from((
-                "address".to_owned(),
+                "address",
                 JsonValue::Object(vec![
-                    JsonProperty::from((
-                        "street".to_owned(),
-                        JsonValue::String("123 Main St".to_owned()),
-                    )),
-                    JsonProperty::from((
-                        "city".to_owned(),
-                        JsonValue::String("New York".to_owned()),
-                    )),
-                    JsonProperty::from(("zipcode".to_owned(), JsonValue::Null)),
+                    JsonProperty::from(("street", JsonValue::String("123 Main St"))),
+                    JsonProperty::from(("city", JsonValue::String("New York"))),
+                    JsonProperty::from(("zipcode", JsonValue::Null)),
                 ]),
             )),
             JsonProperty::from((
-                "courses".to_owned(),
+                "courses",
                 JsonValue::Array(vec![
                     JsonValue::Object(vec![
-                        JsonProperty::from((
-                            "courseName".to_owned(),
-                            JsonValue::String("Math".to_owned()),
-                        )),
-                        JsonProperty::from(("grade".to_owned(), JsonValue::String("A".to_owned()))),
+                        JsonProperty::from(("courseName", JsonValue::String("Math"))),
+                        JsonProperty::from(("grade", JsonValue::String("A"))),
                     ]),
                     JsonValue::Object(vec![
-                        JsonProperty::from((
-                            "courseName".to_owned(),
-                            JsonValue::String("Science".to_owned()),
-                        )),
-                        JsonProperty::from(("grade".to_owned(), JsonValue::String("B".to_owned()))),
+                        JsonProperty::from(("courseName", JsonValue::String("Science"))),
+                        JsonProperty::from(("grade", JsonValue::String("B"))),
                     ]),
                 ]),
             )),
             JsonProperty::from((
-                "preferences".to_owned(),
+                "preferences",
                 JsonValue::Object(vec![
-                    JsonProperty::from(("notifications".to_owned(), JsonValue::Boolean(true))),
-                    JsonProperty::from(("theme".to_owned(), JsonValue::String("dark".to_owned()))),
+                    JsonProperty::from(("notifications", JsonValue::Boolean(true))),
+                    JsonProperty::from(("theme", JsonValue::String("dark"))),
                 ]),
             )),
             JsonProperty::from((
-                "scores".to_owned(),
+                "scores",
                 JsonValue::Array(vec![
                     JsonValue::Number(95),
                     JsonValue::Number(88),
@@ -129,16 +117,10 @@ mod tests {
                 ]),
             )),
             JsonProperty::from((
-                "metadata".to_owned(),
+                "metadata",
                 JsonValue::Object(vec![
-                    JsonProperty::from((
-                        "createdAt".to_owned(),
-                        JsonValue::String("2023-10-01T12:34:56Z".to_owned()),
-                    )),
-                    JsonProperty::from((
-                        "updatedAt".to_owned(),
-                        JsonValue::String("2023-10-01T12:34:56Z".to_owned()),
-                    )),
+                    JsonProperty::from(("createdAt", JsonValue::String("2023-10-01T12:34:56Z"))),
+                    JsonProperty::from(("updatedAt", JsonValue::String("2023-10-01T12:34:56Z"))),
                 ]),
             )),
         ]);
