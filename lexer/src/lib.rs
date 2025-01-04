@@ -154,12 +154,10 @@ impl<'a> Lexer<'a> {
             Some(b':') => TokenKind::Colon,
             Some(b',') => TokenKind::Comma,
             Some(b'"') => {
-                let str = self.read_string();
-
                 return Token {
                     kind: TokenKind::String,
-                    origin: str,
-                };
+                    origin: self.read_string(),
+                }
             }
             Some(other) if other.is_ascii_alphabetic() => {
                 let ident = self.read_ident();
@@ -177,12 +175,10 @@ impl<'a> Lexer<'a> {
                 };
             }
             Some(other) if other.is_ascii_digit() => {
-                let num = self.read_number();
-
                 return Token {
                     kind: TokenKind::Number,
-                    origin: num,
-                };
+                    origin: self.read_number(),
+                }
             }
             _ if self.read_position > self.input.len() => {
                 return Token {
