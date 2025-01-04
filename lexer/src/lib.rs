@@ -37,9 +37,7 @@ pub enum Token<'a> {
 impl std::fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value = match self {
-            Token::String(literal) if literal.0.is_empty() => "string",
-            Token::Number(literal) if literal.0.is_empty() => "number",
-            Token::String(literal) | Token::Number(literal) => &format!("'{}'", literal),
+            Token::String(literal) | Token::Number(literal) => &literal.to_string(),
             Token::True => "true",
             Token::False => "false",
             Token::Null => "null",
@@ -181,6 +179,11 @@ impl<'a> Lexer<'a> {
             Some(b']') => Token::RBracket,
             Some(b':') => Token::Colon,
             Some(b',') => Token::Comma,
+            Some(b'"') => {
+                let str = self.read_string();
+
+                Token::String(TokenLiteral(Cow::Borrowed(str)))
+            }
             Some(other) if other.is_ascii_alphabetic() => {
                 let ident = self.read_ident();
 
@@ -195,11 +198,6 @@ impl<'a> Lexer<'a> {
                 let num = self.read_number();
 
                 return Token::Number(TokenLiteral(Cow::Borrowed(num)));
-            }
-            Some(b'"') => {
-                let str = self.read_string();
-
-                Token::String(TokenLiteral(Cow::Borrowed(str)))
             }
             _ if self.read_position > self.input.len() => Token::Eof,
             _ => Token::Illegal,
