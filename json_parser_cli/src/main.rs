@@ -9,7 +9,6 @@ fn main() {
     file.read_to_end(&mut bytes).unwrap();
 
     // let root = simd_json::to_borrowed_value(&mut bytes).unwrap();
-    // dbg!(&root);
 
     let parser = Parser::new(&bytes);
     let bump = Bump::new();
@@ -17,6 +16,4 @@ fn main() {
     if let Err(e) = parser.parse(&bump) {
         println!("{e}");
     };
-
-    // let res = root.as_flattened();
 }

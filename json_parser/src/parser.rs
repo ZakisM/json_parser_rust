@@ -7,20 +7,22 @@ use crate::{
 };
 
 macro_rules! expected_token_err {
-    ($actual_token:expr, $position:expr, $expected_token:path) => {
+    ($actual_token:expr, $row:expr, $column:expr, $expected_token:path) => {
         return Err(ExpectedTokenError {
             expected: vec![$expected_token],
             actual: $actual_token.kind,
             origin: String::from_utf8_lossy($actual_token.origin).to_string(),
-            position: $position,
+            row: $row,
+            column: $column,
         })
     };
-    ($actual_token:expr, $position:expr, $( $variant:ident )|+) => {
+    ($actual_token:expr, $row:expr, $column:expr, $( $variant:ident )|+) => {
         return Err(ExpectedTokenError {
             expected: vec![$(TokenKind::$variant),+],
             actual: $actual_token.kind,
             origin: String::from_utf8_lossy($actual_token.origin).to_string(),
-            position: $position,
+            row: $row,
+            column: $column,
         })
     };
 }
@@ -52,7 +54,7 @@ impl<'a> Parser<'a> {
 
     fn expect_peek(&mut self, expected: TokenKind) -> Result<(), ExpectedTokenError> {
         if self.peek_token.kind != expected {
-            expected_token_err!(self.peek_token, self.lexer.position, expected)
+            expected_token_err!(self.peek_token, self.lexer.row, self.lexer.column, expected)
         }
 
         self.next_token();
@@ -89,7 +91,8 @@ impl<'a> Parser<'a> {
             _ => {
                 expected_token_err!(
                     self.peek_token,
-                    self.lexer.position,
+                    self.lexer.row,
+                    self.lexer.column,
                     String | Number | True | False | Null | LBrace | LBracket
                 )
             }
@@ -129,7 +132,12 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBracket => break,
                 _ => {
-                    expected_token_err!(self.peek_token, self.lexer.position, Comma | RBracket)
+                    expected_token_err!(
+                        self.peek_token,
+                        self.lexer.row,
+                        self.lexer.column,
+                        Comma | RBracket
+                    )
                 }
             }
         }
@@ -154,7 +162,12 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBrace => break,
                 _ => {
-                    expected_token_err!(self.peek_token, self.lexer.position, Comma | RBrace)
+                    expected_token_err!(
+                        self.peek_token,
+                        self.lexer.row,
+                        self.lexer.column,
+                        Comma | RBrace
+                    )
                 }
             }
         }
@@ -171,7 +184,12 @@ impl<'a> Parser<'a> {
             (&self.current_token.kind, &self.peek_token.kind),
             (TokenKind::RBrace, TokenKind::Eof)
         ) {
-            expected_token_err!(self.current_token, self.lexer.position, TokenKind::Eof)
+            expected_token_err!(
+                self.current_token,
+                self.lexer.row,
+                self.lexer.column,
+                TokenKind::Eof
+            )
         }
 
         Ok(result)
@@ -186,7 +204,12 @@ impl<'a> Parser<'a> {
             (&self.current_token.kind, &self.peek_token.kind),
             (TokenKind::RBracket, TokenKind::Eof)
         ) {
-            expected_token_err!(self.current_token, self.lexer.position, TokenKind::Eof)
+            expected_token_err!(
+                self.current_token,
+                self.lexer.row,
+                self.lexer.column,
+                TokenKind::Eof
+            )
         }
 
         Ok(result)
@@ -196,7 +219,12 @@ impl<'a> Parser<'a> {
         match self.peek_token.kind {
             TokenKind::LBrace => self.parse_root_object(bump),
             TokenKind::LBracket => self.parse_root_array(bump),
-            _ => expected_token_err!(self.current_token, self.lexer.position, LBrace | LBracket),
+            _ => expected_token_err!(
+                self.current_token,
+                self.lexer.row,
+                self.lexer.column,
+                LBrace | LBracket
+            ),
         }
     }
 }

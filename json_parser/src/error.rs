@@ -5,7 +5,8 @@ pub struct ExpectedTokenError {
     pub expected: Vec<TokenKind>,
     pub actual: TokenKind,
     pub origin: String,
-    pub position: usize,
+    pub row: usize,
+    pub column: usize,
 }
 
 impl std::fmt::Display for ExpectedTokenError {
@@ -19,8 +20,12 @@ impl std::fmt::Display for ExpectedTokenError {
 
         write!(
             f,
-            "expected token at position {} to be {} but got '{}' instead which is '{}'",
-            self.position, expected, self.origin, self.actual
+            "expected token at row {} column {} to be {} but got '{}' instead which is '{}'",
+            self.row,
+            self.column - 1,
+            expected,
+            self.origin,
+            self.actual
         )
     }
 }

@@ -38,8 +38,8 @@ impl std::fmt::Display for TokenKind {
             TokenKind::RBracket => "]",
             TokenKind::Colon => ":",
             TokenKind::Comma => ",",
-            TokenKind::Illegal => "Illegal",
-            TokenKind::Eof => "EOF",
+            TokenKind::Illegal => "Not allowed",
+            TokenKind::Eof => "End of file",
         };
 
         write!(f, "{value}")
@@ -49,9 +49,11 @@ impl std::fmt::Display for TokenKind {
 #[derive(Debug)]
 pub struct Lexer<'a> {
     input: &'a [u8],
-    pub position: usize,  // current position in input (points to current char)
+    position: usize,      // current position in input (points to current char)
     read_position: usize, // current reading position in input (after current char)
-    ch: Option<u8>,       // current char under examination
+    pub row: usize,
+    pub column: usize,
+    ch: Option<u8>, // current char under examination
 }
 
 impl<'a> Lexer<'a> {
@@ -60,6 +62,8 @@ impl<'a> Lexer<'a> {
             input,
             position: 0,
             read_position: 0,
+            row: 1,
+            column: 0,
             ch: None,
         };
 
@@ -73,6 +77,7 @@ impl<'a> Lexer<'a> {
             self.ch = None;
         } else {
             self.ch = Some(self.input[self.read_position]);
+            self.column += 1;
         }
 
         self.position = self.read_position;
@@ -88,7 +93,16 @@ impl<'a> Lexer<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        while matches!(self.ch, Some(b' ' | b'\t' | b'\n' | b'\r')) {
+        loop {
+            match self.ch {
+                Some(b' ' | b'\t' | b'\r') => (),
+                Some(b'\n') => {
+                    self.row += 1;
+                    self.column = 0;
+                }
+                _ => break,
+            }
+
             self.read_char();
         }
     }
