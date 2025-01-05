@@ -110,12 +110,13 @@ impl<'a> Lexer<'a> {
     fn read_number(&mut self) -> &'a [u8] {
         let start_pos = self.position;
 
-        while let Some(c) = self.ch {
-            if !c.is_ascii_digit() {
-                break;
-            }
-
+        loop {
             self.read_char();
+
+            match self.ch {
+                Some(c) if !c.is_ascii_digit() => break,
+                _ => continue,
+            }
         }
 
         &self.input[start_pos..self.position]
@@ -171,11 +172,15 @@ impl<'a> Lexer<'a> {
                     origin: ident,
                 };
             }
-            Some(other) if other.is_ascii_digit() => {
-                return Token {
-                    kind: TokenKind::Number,
-                    origin: self.read_number(),
-                }
+            Some(other) if other == b'-' || other.is_ascii_digit() => {
+                let num = self.read_number();
+
+                let kind = match num {
+                    b"-" => TokenKind::Illegal,
+                    _ => TokenKind::Number,
+                };
+
+                return Token { kind, origin: num };
             }
             _ if self.read_position > self.input.len() => {
                 return Token {
@@ -285,7 +290,7 @@ mod tests {
         let json = r#"
 {
 	"string": "Hello, world!",
-	"number": 42,
+	"number": -42,
 	"boolean": true,
 	"null": null,
 	"array": [1, 2, 3, 4, "five", true],
@@ -309,7 +314,10 @@ mod tests {
             tok!(','),
             tok!(s "number"),
             tok!(':'),
-            tok!(n 42),
+            Token {
+                kind: TokenKind::Number,
+                origin: b"-42",
+            },
             tok!(','),
             tok!(s "boolean"),
             tok!(':'),
@@ -396,6 +404,28 @@ mod tests {
             tok!(s "key"),
             tok!(':'),
             tok!(s r#"Hello, \"world!\""#),
+            tok!('}'),
+        ];
+
+        for tok in expected_tokens {
+            assert_eq!(lexer.next_token(), tok);
+        }
+    }
+
+    #[test]
+    fn tokenize_invalid_number() {
+        let json = r#"{"number": -}"#;
+
+        let mut lexer = Lexer::new(json.as_bytes());
+
+        let expected_tokens = [
+            tok!('{'),
+            tok!(s "number"),
+            tok!(':'),
+            Token {
+                kind: TokenKind::Illegal,
+                origin: b"-",
+            },
             tok!('}'),
         ];
 

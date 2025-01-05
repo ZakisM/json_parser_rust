@@ -1,20 +1,12 @@
-[workspace]
-members = ["json_parser", "json_parser_cli"]
-
 [package]
-name = "json_parser_rust"
+name = "json_parser_cli"
 version = "0.1.0"
 edition = "2021"
 
-# [build]
-# target = "x86_64-pc-windows-msvc"
-
 [dependencies]
 bumpalo = { version = "3.16.0", features = ["collections"] }
-json_parser = { path = "./json_parser" }
-
-[lib]
-crate-type = ["cdylib"]
+json_parser = { path = "../json_parser" }
+simd-json = "0.14.3"
 
 [profile.release]
 codegen-units = 1

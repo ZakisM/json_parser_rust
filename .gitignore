@@ -1,3 +1,4 @@
 target/
+instruments/
 *.xlsm
 .DS_STORE
