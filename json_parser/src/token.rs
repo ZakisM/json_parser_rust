@@ -124,10 +124,22 @@ impl<'a> Lexer<'a> {
     fn read_number(&mut self) -> &'a [u8] {
         let start_pos = self.position;
 
+        let mut decimal_count = 0;
+
+        // TODO: Must handle numbers like this :)
+        // 3.21865081787e-6
+
         loop {
             self.read_char();
 
             match self.ch {
+                Some(b'.') => {
+                    if decimal_count == 1 {
+                        break;
+                    } else {
+                        decimal_count += 1;
+                    }
+                }
                 Some(c) if !c.is_ascii_digit() => break,
                 _ => continue,
             }

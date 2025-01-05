@@ -74,7 +74,7 @@ impl<'a> Parser<'a> {
     fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
         // let s = std::str::from_utf8(literal).expect("literal must be a string");
         let s = unsafe { std::str::from_utf8_unchecked(literal) };
-        let n = s.parse::<isize>().expect("literal must be a number");
+        let n = s.parse::<f64>().expect("literal must be a number");
 
         Ok(JsonValue::Number(n))
     }
@@ -260,7 +260,7 @@ mod tests {
             parser.parse(&bump),
             Ok(JsonValue::Object(vec![in &bump;
                 JsonProperty::from(("string", JsonValue::String("Hello, world!"))),
-                JsonProperty::from(("number", JsonValue::Number(-42))),
+                JsonProperty::from(("number", JsonValue::Number(-42.0))),
                 JsonProperty::from((
                     "nested_object",
                     JsonValue::Object(vec![
@@ -273,22 +273,22 @@ mod tests {
                             "nested_number",
                             JsonValue::Array(vec![
                                 in &bump;
-                                JsonValue::Number(100),
-                                JsonValue::Number(200),
-                                JsonValue::Number(300),
+                                JsonValue::Number(100.0),
+                                JsonValue::Number(200.0),
+                                JsonValue::Number(300.0),
                                 JsonValue::Array(vec![
                                     in &bump;
-                                    JsonValue::Number(400),
-                                    JsonValue::Number(-500),
+                                    JsonValue::Number(400.0),
+                                    JsonValue::Number(-500.0),
                                     JsonValue::Array(vec![
                                         in &bump;
-                                        JsonValue::Number(600),
+                                        JsonValue::Number(600.0),
                                         JsonValue::Array(vec![
                                             in &bump;
-                                            JsonValue::Number(700),
+                                            JsonValue::Number(700.0),
                                             JsonValue::Object(vec![
                                                 in &bump;
-                                                JsonProperty::from(("secret", JsonValue::Number(12345)
+                                                JsonProperty::from(("secret", JsonValue::Number(12345.0)
                                             ))])
                                         ])
                                     ])
@@ -343,8 +343,8 @@ mod tests {
                 in &bump;
                 JsonValue::Object(vec![
                     in &bump;
-                    JsonProperty::from(("one", JsonValue::Number(1))),
-                    JsonProperty::from(("two", JsonValue::Number(2)))
+                    JsonProperty::from(("one", JsonValue::Number(1.0))),
+                    JsonProperty::from(("two", JsonValue::Number(2.0)))
             ])]))
         );
     }

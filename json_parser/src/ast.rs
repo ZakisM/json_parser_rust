@@ -16,15 +16,18 @@ impl<'a> From<(&'a str, JsonValue<'a>)> for JsonProperty<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum JsonValue<'a> {
     Null,
     Boolean(bool),
-    Number(isize),
+    Number(f64),
     String(&'a str),
     Object(Vec<'a, JsonProperty<'a>>),
     Array(Vec<'a, JsonValue<'a>>),
 }
+
+// TODO: Definitely wrong
+impl std::cmp::Eq for JsonValue<'_> {}
 
 impl<'a> JsonValue<'a> {
     fn inner_value(&self) -> String {
