@@ -7,16 +7,20 @@ use crate::{
 };
 
 macro_rules! expected_token_err {
-    ($self:expr, $token:path) => {
+    ($actual_token:expr, $position:expr, $expected_token:path) => {
         return Err(ExpectedTokenError {
-            expected: vec![$token],
-            actual: $self.kind,
+            expected: vec![$expected_token],
+            actual: $actual_token.kind,
+            origin: String::from_utf8_lossy($actual_token.origin).to_string(),
+            position: $position,
         })
     };
-    ($self:expr, $( $variant:ident )|+) => {
+    ($actual_token:expr, $position:expr, $( $variant:ident )|+) => {
         return Err(ExpectedTokenError {
             expected: vec![$(TokenKind::$variant),+],
-            actual: $self.kind,
+            actual: $actual_token.kind,
+            origin: String::from_utf8_lossy($actual_token.origin).to_string(),
+            position: $position,
         })
     };
 }
@@ -48,7 +52,7 @@ impl<'a> Parser<'a> {
 
     fn expect_peek(&mut self, expected: TokenKind) -> Result<(), ExpectedTokenError> {
         if self.peek_token.kind != expected {
-            expected_token_err!(self.peek_token, expected)
+            expected_token_err!(self.peek_token, self.lexer.position, expected)
         }
 
         self.next_token();
@@ -68,7 +72,6 @@ impl<'a> Parser<'a> {
     fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
         // let s = std::str::from_utf8(literal).expect("literal must be a string");
         let s = unsafe { std::str::from_utf8_unchecked(literal) };
-        dbg!(&s);
         let n = s.parse::<isize>().expect("literal must be a number");
 
         Ok(JsonValue::Number(n))
@@ -86,6 +89,7 @@ impl<'a> Parser<'a> {
             _ => {
                 expected_token_err!(
                     self.peek_token,
+                    self.lexer.position,
                     String | Number | True | False | Null | LBrace | LBracket
                 )
             }
@@ -125,7 +129,7 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBracket => break,
                 _ => {
-                    expected_token_err!(self.peek_token, Comma | RBracket)
+                    expected_token_err!(self.peek_token, self.lexer.position, Comma | RBracket)
                 }
             }
         }
@@ -150,7 +154,7 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBrace => break,
                 _ => {
-                    expected_token_err!(self.peek_token, Comma | RBrace)
+                    expected_token_err!(self.peek_token, self.lexer.position, Comma | RBrace)
                 }
             }
         }
@@ -167,7 +171,7 @@ impl<'a> Parser<'a> {
             (&self.current_token.kind, &self.peek_token.kind),
             (TokenKind::RBrace, TokenKind::Eof)
         ) {
-            expected_token_err!(self.current_token, TokenKind::Eof)
+            expected_token_err!(self.current_token, self.lexer.position, TokenKind::Eof)
         }
 
         Ok(result)
@@ -182,7 +186,7 @@ impl<'a> Parser<'a> {
             (&self.current_token.kind, &self.peek_token.kind),
             (TokenKind::RBracket, TokenKind::Eof)
         ) {
-            expected_token_err!(self.current_token, TokenKind::Eof)
+            expected_token_err!(self.current_token, self.lexer.position, TokenKind::Eof)
         }
 
         Ok(result)
@@ -192,7 +196,7 @@ impl<'a> Parser<'a> {
         match self.peek_token.kind {
             TokenKind::LBrace => self.parse_root_object(bump),
             TokenKind::LBracket => self.parse_root_array(bump),
-            _ => expected_token_err!(self.current_token, LBrace | LBracket),
+            _ => expected_token_err!(self.current_token, self.lexer.position, LBrace | LBracket),
         }
     }
 }

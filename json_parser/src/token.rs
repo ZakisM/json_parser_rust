@@ -42,14 +42,14 @@ impl std::fmt::Display for TokenKind {
             TokenKind::Eof => "EOF",
         };
 
-        write!(f, "'{value}'")
+        write!(f, "{value}")
     }
 }
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
     input: &'a [u8],
-    position: usize,      // current position in input (points to current char)
+    pub position: usize,  // current position in input (points to current char)
     read_position: usize, // current reading position in input (after current char)
     ch: Option<u8>,       // current char under examination
 }

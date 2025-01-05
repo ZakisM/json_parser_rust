@@ -13,9 +13,10 @@ fn main() {
 
     let parser = Parser::new(&bytes);
     let bump = Bump::new();
-    let root = parser.parse(&bump).unwrap();
+
+    if let Err(e) = parser.parse(&bump) {
+        println!("{e}");
+    };
 
     // let res = root.as_flattened();
-
-    // dbg!(&res);
 }
