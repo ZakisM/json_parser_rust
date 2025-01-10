@@ -11,6 +11,4 @@ simd-json = "0.14.3"
 [profile.release]
 codegen-units = 1
 lto = 'fat'
-opt-level = 3
-panic = "abort"
-strip = "symbols"
+debug = true

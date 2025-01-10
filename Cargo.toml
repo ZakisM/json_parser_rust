@@ -19,6 +19,5 @@ crate-type = ["cdylib"]
 [profile.release]
 codegen-units = 1
 lto = 'fat'
-opt-level = 3
-panic = "abort"
-strip = "symbols"
+debug = true
+

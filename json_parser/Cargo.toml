@@ -6,3 +6,8 @@ edition = "2021"
 [dependencies]
 bumpalo = { version = "3.16.0", features = ["collections"] }
 mimalloc = { version = "*" }
+
+[profile.release]
+codegen-units = 1
+lto = 'fat'
+debug = true

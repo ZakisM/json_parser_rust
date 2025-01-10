@@ -74,7 +74,15 @@ impl<'a> Parser<'a> {
     fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
         // let s = std::str::from_utf8(literal).expect("literal must be a string");
         let s = unsafe { std::str::from_utf8_unchecked(literal) };
-        let n = s.parse::<f64>().expect("literal must be a number");
+        let n = s.parse::<f64>().map_err(|_| {
+            ExpectedTokenError {
+                expected: todo!(),
+                actual: todo!(),
+                origin: todo!(),
+                row: todo!(),
+                column: todo!(),
+            };
+        })?;
 
         Ok(JsonValue::Number(n))
     }
@@ -122,7 +130,7 @@ impl<'a> Parser<'a> {
             return Ok(JsonValue::Array(Vec::new_in(bump)));
         }
 
-        let mut items = Vec::with_capacity_in(4950000, bump);
+        let mut items = Vec::with_capacity_in(16, bump);
 
         loop {
             let value = self.parse_value(bump)?;
@@ -152,7 +160,7 @@ impl<'a> Parser<'a> {
             return Ok(JsonValue::Object(Vec::new_in(bump)));
         }
 
-        let mut items = Vec::with_capacity_in(5, bump);
+        let mut items = Vec::with_capacity_in(16, bump);
 
         loop {
             let item = self.parse_property(bump)?;
@@ -232,7 +240,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bumpalo::vec;
+    use bumpalo::vec as bump_vec;
 
     #[test]
     fn parse_top_level_object() {
@@ -242,7 +250,7 @@ mod tests {
 	"number": -42,
 	"nested_object": {
 		"nested_string": "This is a nested string",
-		"nested_number": [100, 200, 300, [400, -500, [600, [700, {"secret": 12345}]]]]
+		"nested_number": [100, 3.21865081787e-6, 300, [400, -500, [600, [700, {"secret": 12345}]]]]
 	},
 	"boolean": true,
 	"nested_deep_empty_array": [[[]], {}],
@@ -258,12 +266,12 @@ mod tests {
 
         assert_eq!(
             parser.parse(&bump),
-            Ok(JsonValue::Object(vec![in &bump;
+            Ok(JsonValue::Object(bump_vec![in &bump;
                 JsonProperty::from(("string", JsonValue::String("Hello, world!"))),
                 JsonProperty::from(("number", JsonValue::Number(-42.0))),
                 JsonProperty::from((
                     "nested_object",
-                    JsonValue::Object(vec![
+                    JsonValue::Object(bump_vec![
                         in &bump;
                         JsonProperty::from((
                             "nested_string",
@@ -271,22 +279,22 @@ mod tests {
                         )),
                         JsonProperty::from((
                             "nested_number",
-                            JsonValue::Array(vec![
+                            JsonValue::Array(bump_vec![
                                 in &bump;
                                 JsonValue::Number(100.0),
-                                JsonValue::Number(200.0),
+                                JsonValue::Number(3.21865081787e-6),
                                 JsonValue::Number(300.0),
-                                JsonValue::Array(vec![
+                                JsonValue::Array(bump_vec![
                                     in &bump;
                                     JsonValue::Number(400.0),
                                     JsonValue::Number(-500.0),
-                                    JsonValue::Array(vec![
+                                    JsonValue::Array(bump_vec![
                                         in &bump;
                                         JsonValue::Number(600.0),
-                                        JsonValue::Array(vec![
+                                        JsonValue::Array(bump_vec![
                                             in &bump;
                                             JsonValue::Number(700.0),
-                                            JsonValue::Object(vec![
+                                            JsonValue::Object(bump_vec![
                                                 in &bump;
                                                 JsonProperty::from(("secret", JsonValue::Number(12345.0)
                                             ))])
@@ -298,24 +306,24 @@ mod tests {
                     ])
                 )),
                 JsonProperty::from(("boolean", JsonValue::Boolean(true))),
-                JsonProperty::from(("nested_deep_empty_array", JsonValue::Array(vec![
+                JsonProperty::from(("nested_deep_empty_array", JsonValue::Array(bump_vec![
                     in &bump;
-                    JsonValue::Array(vec![
+                    JsonValue::Array(bump_vec![
                         in &bump;
-                        JsonValue::Array(vec![
+                        JsonValue::Array(bump_vec![
                             in &bump;
                         ])
                     ]),
-                    JsonValue::Object(vec![
+                    JsonValue::Object(bump_vec![
                         in &bump;
                     ])
                 ]))),
-                JsonProperty::from(("nested_empties", JsonValue::Object(vec![
+                JsonProperty::from(("nested_empties", JsonValue::Object(bump_vec![
                     in &bump;
-                    JsonProperty::from(("empty_object", JsonValue::Object(vec![
+                    JsonProperty::from(("empty_object", JsonValue::Object(bump_vec![
                         in &bump;
                     ]))),
-                    JsonProperty::from(("empty_array", JsonValue::Array(vec![
+                    JsonProperty::from(("empty_array", JsonValue::Array(bump_vec![
                         in &bump;
                     ])))
                 ]))),
@@ -339,13 +347,39 @@ mod tests {
 
         assert_eq!(
             parser.parse(&bump),
-            Ok(JsonValue::Array(vec![
+            Ok(JsonValue::Array(bump_vec![
                 in &bump;
-                JsonValue::Object(vec![
+                JsonValue::Object(bump_vec![
                     in &bump;
                     JsonProperty::from(("one", JsonValue::Number(1.0))),
                     JsonProperty::from(("two", JsonValue::Number(2.0)))
             ])]))
         );
+    }
+
+    #[test]
+    fn parse_invalid_number() {
+        let json = r#"
+{
+    "one": 4eee,
+    "two": 2
+}
+"#;
+
+        let bump = Bump::new();
+        let parser = Parser::new(json.as_bytes());
+
+        dbg!(&parser.parse(&bump));
+
+        // assert_eq!(
+        //     parser.parse(&bump),
+        //     Err(ExpectedTokenError {
+        //         expected: vec![TokenKind::Number],
+        //         actual: todo!(),
+        //         origin: todo!(),
+        //         row: todo!(),
+        //         column: todo!()
+        //     })
+        // );
     }
 }

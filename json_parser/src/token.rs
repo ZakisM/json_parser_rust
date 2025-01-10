@@ -124,24 +124,14 @@ impl<'a> Lexer<'a> {
     fn read_number(&mut self) -> &'a [u8] {
         let start_pos = self.position;
 
-        let mut decimal_count = 0;
-
         // TODO: Must handle numbers like this :)
         // 3.21865081787e-6
 
         loop {
             self.read_char();
 
-            match self.ch {
-                Some(b'.') => {
-                    if decimal_count == 1 {
-                        break;
-                    } else {
-                        decimal_count += 1;
-                    }
-                }
-                Some(c) if !c.is_ascii_digit() => break,
-                _ => continue,
+            if !matches!(self.ch, Some(b'0'..=b'9' | b'-'..=b'.' | b'e')) {
+                break;
             }
         }
 
@@ -319,11 +309,11 @@ mod tests {
 	"number": -42,
 	"boolean": true,
 	"null": null,
-	"array": [1, 2, 3, 4, "five", true],
+	"array": [1, 2, 3, 4eee, "five", true],
 	"nested_object": {
 		"nested_string": "This is a nested string",
 		"nested_number": 100,
-		"nested_array": [10, 20, 30],
+		"nested_array": [10, 3.21865081787e-6, 30],
 		"nested_boolean": false
 	},
 	"another_nested_object": { "level1": { "level2": { "key": "value" } } }
@@ -362,7 +352,10 @@ mod tests {
             tok!(','),
             tok!(n 3),
             tok!(','),
-            tok!(n 4),
+            Token {
+                kind: TokenKind::Number,
+                origin: b"4eee",
+            },
             tok!(','),
             tok!(s "five"),
             tok!(','),
@@ -385,7 +378,10 @@ mod tests {
             tok!('['),
             tok!(n 10),
             tok!(','),
-            tok!(n 20),
+            Token {
+                kind: TokenKind::Number,
+                origin: b"3.21865081787e-6",
+            },
             tok!(','),
             tok!(n 30),
             tok!(']'),
