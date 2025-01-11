@@ -124,7 +124,7 @@ impl<'a> Parser<'a> {
             return Ok(JsonValue::Array(Vec::new_in(bump)));
         }
 
-        let mut items = Vec::with_capacity_in(16, bump);
+        let mut items = Vec::with_capacity_in(8, bump);
 
         loop {
             let value = self.parse_value(bump)?;
@@ -154,7 +154,7 @@ impl<'a> Parser<'a> {
             return Ok(JsonValue::Object(Vec::new_in(bump)));
         }
 
-        let mut items = Vec::with_capacity_in(16, bump);
+        let mut items = Vec::with_capacity_in(8, bump);
 
         loop {
             let item = self.parse_property(bump)?;

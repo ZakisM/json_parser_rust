@@ -1,9 +1,4 @@
-#![feature(allocator_api, portable_simd)]
-
-use mimalloc::MiMalloc;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
+#![feature(allocator_api)]
 
 pub mod ast;
 pub mod error;

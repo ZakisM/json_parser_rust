@@ -1,7 +1,4 @@
-use std::{
-    iter::{Enumerate, Peekable},
-    str::Chars,
-};
+use std::{iter::Peekable, str::Chars};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
@@ -82,15 +79,18 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_char(&mut self) {
-        if let Some(ch) = self.chars.next() {
-            self.ch = Some(ch);
-            self.column += ch.len_utf8();
+        match self.chars.next() {
+            Some(ch) => {
+                self.ch = Some(ch);
+                self.column += ch.len_utf8();
 
-            self.position = self.read_position;
-            self.read_position += ch.len_utf8();
-        } else {
-            self.read_position = self.input.len();
-            self.ch = None;
+                self.position = self.read_position;
+                self.read_position += ch.len_utf8();
+            }
+            None => {
+                self.read_position = self.input.len();
+                self.ch = None;
+            }
         }
     }
 

@@ -7,8 +7,3 @@ edition = "2021"
 bumpalo = { version = "3.16.0", features = ["collections"] }
 json_parser = { path = "../json_parser" }
 simd-json = "0.14.3"
-
-[profile.release]
-codegen-units = 1
-lto = 'fat'
-debug = true
