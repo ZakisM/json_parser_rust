@@ -82,7 +82,7 @@ impl<'a> Lexer<'a> {
         match self.chars.next() {
             Some(ch) => {
                 self.ch = Some(ch);
-                self.column += ch.len_utf8();
+                self.column += 1;
 
                 self.position = self.read_position;
                 self.read_position += ch.len_utf8();
@@ -125,10 +125,6 @@ impl<'a> Lexer<'a> {
 
     fn read_number(&mut self) -> &'a str {
         let start_pos = self.position;
-
-        // TODO: Must handle numbers like this :)
-        // 3.21865081787e-6
-        // -3.21865081787e-6
 
         loop {
             self.read_char();

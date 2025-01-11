@@ -62,12 +62,10 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    // TODO: Result here?
     fn parse_string(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
         Ok(JsonValue::String(literal))
     }
 
-    // TODO: Result here?
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let n = literal.parse::<f64>().map_err(|_| {
             ExpectedTokenError::with_offset(
@@ -365,13 +363,13 @@ mod tests {
 
         assert_eq!(
             parser.parse(&bump),
-            Err(ExpectedTokenError::new(
-                vec![TokenKind::Number],
-                TokenKind::Illegal,
-                "4eee".to_owned(),
-                3,
-                16
-            ))
+            Err(ExpectedTokenError {
+                expected: vec![TokenKind::Number],
+                actual: TokenKind::Illegal,
+                origin: "4eee".to_owned(),
+                row: 3,
+                column: 16
+            })
         );
     }
 
@@ -389,13 +387,13 @@ mod tests {
 
         assert_eq!(
             parser.parse(&bump),
-            Err(ExpectedTokenError::new(
-                vec![TokenKind::Comma, TokenKind::RBrace],
-                TokenKind::Illegal,
-                "è".to_owned(),
-                3,
-                17
-            ))
+            Err(ExpectedTokenError {
+                expected: vec![TokenKind::Comma, TokenKind::RBrace],
+                actual: TokenKind::Illegal,
+                origin: "è".to_owned(),
+                row: 3,
+                column: 17
+            })
         );
     }
 }

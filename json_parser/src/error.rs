@@ -2,30 +2,14 @@ use crate::token::TokenKind;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExpectedTokenError {
-    expected: Vec<TokenKind>,
-    actual: TokenKind,
-    origin: String,
-    row: usize,
-    column: usize,
+    pub expected: Vec<TokenKind>,
+    pub actual: TokenKind,
+    pub origin: String,
+    pub row: usize,
+    pub column: usize,
 }
 
 impl ExpectedTokenError {
-    pub fn new(
-        expected: Vec<TokenKind>,
-        actual: TokenKind,
-        origin: String,
-        row: usize,
-        column: usize,
-    ) -> Self {
-        Self {
-            expected,
-            actual,
-            origin,
-            row,
-            column,
-        }
-    }
-
     pub fn with_offset(
         expected: Vec<TokenKind>,
         actual: TokenKind,
@@ -33,7 +17,7 @@ impl ExpectedTokenError {
         row: usize,
         column: usize,
     ) -> Self {
-        let column = column - origin.len();
+        let column = column - origin.chars().count();
 
         Self {
             expected,
@@ -57,11 +41,7 @@ impl std::fmt::Display for ExpectedTokenError {
         write!(
             f,
             "expected token at row {} column {} to be {} but got '{}' instead which is '{}'",
-            self.row,
-            self.column - self.origin.len(),
-            expected,
-            self.origin,
-            self.actual
+            self.row, self.column, expected, self.origin, self.actual
         )
     }
 }
