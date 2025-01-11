@@ -67,6 +67,16 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        if matches!(literal.as_bytes(), &[b'0', b'0'..=b'9', ..]) {
+            return Err(ExpectedTokenError::with_offset(
+                vec![TokenKind::Number],
+                TokenKind::Illegal,
+                literal.to_owned(),
+                self.lexer.row,
+                self.lexer.column,
+            ));
+        };
+
         let n = literal.parse::<f64>().map_err(|_| {
             ExpectedTokenError::with_offset(
                 vec![TokenKind::Number],
@@ -329,7 +339,7 @@ mod tests {
 [
     {
         "one": 1,
-        "two": 2
+        "zero": 0
     }
 ]
 "#;
@@ -344,7 +354,7 @@ mod tests {
                 JsonValue::Object(bump_vec![
                     in &bump;
                     JsonProperty::from(("one", JsonValue::Number(1.0))),
-                    JsonProperty::from(("two", JsonValue::Number(2.0)))
+                    JsonProperty::from(("zero", JsonValue::Number(0.0)))
             ])]))
         );
     }
@@ -398,9 +408,9 @@ mod tests {
     }
 
     #[test]
-    fn parse_invalid_octal() {
+    fn parse_valid_decimal() {
         let json = r#"
-[-65619720000000.61972000000,029]
+[-65619720000000.61972000000,0.29]
     "#;
 
         let bump = Bump::new();
@@ -408,20 +418,31 @@ mod tests {
 
         assert_eq!(
             parser.parse(&bump),
+            Ok(JsonValue::Array(bump_vec![
+                in &bump;
+                JsonValue::Number(-65619720000000.62),
+                JsonValue::Number(0.29)
+            ]))
+        );
+    }
+
+    #[test]
+    fn parse_invalid_octal() {
+        let json = r#"
+    [-65619720000000.61972000000,029]
+        "#;
+
+        let bump = Bump::new();
+        let parser = Parser::new(json);
+
+        assert_eq!(
+            parser.parse(&bump),
             Err(ExpectedTokenError {
-                expected: vec![
-                    TokenKind::String,
-                    TokenKind::Number,
-                    TokenKind::True,
-                    TokenKind::False,
-                    TokenKind::Null,
-                    TokenKind::LBrace,
-                    TokenKind::LBracket
-                ],
+                expected: vec![TokenKind::Number],
                 actual: TokenKind::Illegal,
-                origin: "0".to_owned(),
+                origin: "029".to_owned(),
                 row: 2,
-                column: 30
+                column: 34
             })
         );
     }

@@ -113,7 +113,7 @@ impl<'a> Lexer<'a> {
         let start_pos = self.position;
 
         while let Some(c) = self.ch {
-            if !c.is_ascii_alphabetic() {
+            if !c.is_ascii_lowercase() {
                 break;
             }
 
@@ -172,7 +172,7 @@ impl<'a> Lexer<'a> {
                     origin: self.read_string(),
                 }
             }
-            Some(other) if other.is_ascii_alphabetic() => {
+            Some('t' | 'f' | 'n') => {
                 let ident = self.read_ident();
 
                 let kind = match ident {
@@ -187,7 +187,7 @@ impl<'a> Lexer<'a> {
                     origin: ident,
                 };
             }
-            Some('-' | '1'..='9') => {
+            Some('-' | '0'..='9') => {
                 let num = self.read_number();
 
                 let kind = match num {
