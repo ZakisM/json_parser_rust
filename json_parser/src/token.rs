@@ -144,11 +144,12 @@ impl<'a> Lexer<'a> {
             self.read_char();
 
             match self.ch {
-                Some('"') | None => {
+                Some('"') => {
                     self.read_char();
                     break;
                 }
                 Some('\\') if matches!(self.chars.peek(), Some('"' | '\\')) => self.read_char(),
+                None => break,
                 _ => continue,
             };
         }
