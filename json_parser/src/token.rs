@@ -129,7 +129,7 @@ impl<'a> Lexer<'a> {
         loop {
             self.read_char();
 
-            if !matches!(self.ch, Some('0'..='9' | '.' | '-' | 'e')) {
+            if !matches!(self.ch, Some('0'..='9' | '.' | '-' | '+' | 'e' | 'E')) {
                 break;
             }
         }
@@ -148,7 +148,7 @@ impl<'a> Lexer<'a> {
                     self.read_char();
                     break;
                 }
-                Some('\\') if self.chars.peek() == Some(&'"') => self.read_char(),
+                Some('\\') if matches!(self.chars.peek(), Some('"' | '\\')) => self.read_char(),
                 _ => continue,
             };
         }
