@@ -1,7 +1,12 @@
+use std::{
+    iter::{Enumerate, Peekable},
+    str::Chars,
+};
+
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
     pub kind: TokenKind,
-    pub origin: &'a [u8],
+    pub origin: &'a str,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
@@ -48,16 +53,19 @@ impl std::fmt::Display for TokenKind {
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
-    input: &'a [u8],
+    input: &'a str,
     position: usize,      // current position in input (points to current char)
     read_position: usize, // current reading position in input (after current char)
     pub row: usize,
     pub column: usize,
-    ch: Option<u8>, // current char under examination
+    ch: Option<char>,
+    chars: Peekable<Chars<'a>>, // current char under examination
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(input: &'a [u8]) -> Self {
+    pub fn new(input: &'a str) -> Self {
+        let chars = input.chars().peekable();
+
         let mut lexer = Self {
             input,
             position: 0,
@@ -65,6 +73,7 @@ impl<'a> Lexer<'a> {
             row: 1,
             column: 0,
             ch: None,
+            chars,
         };
 
         lexer.read_char();
@@ -73,30 +82,23 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_char(&mut self) {
-        if self.read_position >= self.input.len() {
+        if let Some(ch) = self.chars.next() {
+            self.ch = Some(ch);
+            self.column += ch.len_utf8();
+
+            self.position = self.read_position;
+            self.read_position += ch.len_utf8();
+        } else {
+            self.read_position = self.input.len();
             self.ch = None;
-        } else {
-            self.ch = Some(self.input[self.read_position]);
-            self.column += 1;
-        }
-
-        self.position = self.read_position;
-        self.read_position += 1;
-    }
-
-    fn peek_char(&self) -> Option<u8> {
-        if self.read_position >= self.input.len() {
-            None
-        } else {
-            Some(self.input[self.read_position])
         }
     }
 
     fn skip_whitespace(&mut self) {
         loop {
             match self.ch {
-                Some(b' ' | b'\t' | b'\r') => (),
-                Some(b'\n') => {
+                Some(' ' | '\t' | '\r') => (),
+                Some('\n') => {
                     self.row += 1;
                     self.column = 0;
                 }
@@ -107,7 +109,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_ident(&mut self) -> &'a [u8] {
+    fn read_ident(&mut self) -> &'a str {
         let start_pos = self.position;
 
         while let Some(c) = self.ch {
@@ -121,16 +123,17 @@ impl<'a> Lexer<'a> {
         &self.input[start_pos..self.position]
     }
 
-    fn read_number(&mut self) -> &'a [u8] {
+    fn read_number(&mut self) -> &'a str {
         let start_pos = self.position;
 
         // TODO: Must handle numbers like this :)
         // 3.21865081787e-6
+        // -3.21865081787e-6
 
         loop {
             self.read_char();
 
-            if !matches!(self.ch, Some(b'0'..=b'9' | b'-'..=b'.' | b'e')) {
+            if !matches!(self.ch, Some('0'..='9' | '.' | '-' | 'e')) {
                 break;
             }
         }
@@ -138,18 +141,18 @@ impl<'a> Lexer<'a> {
         &self.input[start_pos..self.position]
     }
 
-    fn read_string(&mut self) -> &'a [u8] {
+    fn read_string(&mut self) -> &'a str {
         let start_pos = self.position + 1;
 
         loop {
             self.read_char();
 
             match self.ch {
-                Some(b'"') | None => {
+                Some('"') | None => {
                     self.read_char();
                     break;
                 }
-                Some(b'\\') if self.peek_char() == Some(b'"') => self.read_char(),
+                Some('\\') if self.chars.peek() == Some(&'"') => self.read_char(),
                 _ => continue,
             };
         }
@@ -161,13 +164,13 @@ impl<'a> Lexer<'a> {
         self.skip_whitespace();
 
         let kind = match self.ch {
-            Some(b'{') => TokenKind::LBrace,
-            Some(b'}') => TokenKind::RBrace,
-            Some(b'[') => TokenKind::LBracket,
-            Some(b']') => TokenKind::RBracket,
-            Some(b':') => TokenKind::Colon,
-            Some(b',') => TokenKind::Comma,
-            Some(b'"') => {
+            Some('{') => TokenKind::LBrace,
+            Some('}') => TokenKind::RBrace,
+            Some('[') => TokenKind::LBracket,
+            Some(']') => TokenKind::RBracket,
+            Some(':') => TokenKind::Colon,
+            Some(',') => TokenKind::Comma,
+            Some('"') => {
                 return Token {
                     kind: TokenKind::String,
                     origin: self.read_string(),
@@ -177,9 +180,9 @@ impl<'a> Lexer<'a> {
                 let ident = self.read_ident();
 
                 let kind = match ident {
-                    b"true" => TokenKind::True,
-                    b"false" => TokenKind::False,
-                    b"null" => TokenKind::Null,
+                    "true" => TokenKind::True,
+                    "false" => TokenKind::False,
+                    "null" => TokenKind::Null,
                     _ => TokenKind::Illegal,
                 };
 
@@ -188,17 +191,17 @@ impl<'a> Lexer<'a> {
                     origin: ident,
                 };
             }
-            Some(other) if other == b'-' || other.is_ascii_digit() => {
+            Some(other) if other == '-' || other.is_ascii_digit() => {
                 let num = self.read_number();
 
                 let kind = match num {
-                    b"-" => TokenKind::Illegal,
+                    "-" => TokenKind::Illegal,
                     _ => TokenKind::Number,
                 };
 
                 return Token { kind, origin: num };
             }
-            _ if self.read_position > self.input.len() => {
+            _ if self.read_position == self.input.len() => {
                 return Token {
                     kind: TokenKind::Eof,
                     ..Default::default()
@@ -220,73 +223,73 @@ macro_rules! tok {
     (s $string:literal) => {
         Token {
             kind: TokenKind::String,
-            origin: $string.as_bytes(),
+            origin: $string,
         }
     };
     (n $number:literal) => {
         Token {
             kind: TokenKind::Number,
-            origin: stringify!($number).as_bytes(),
+            origin: stringify!($number),
         }
     };
     (true) => {
         Token {
             kind: TokenKind::True,
-            origin: b"true",
+            origin: "true",
         }
     };
     (false) => {
         Token {
             kind: TokenKind::False,
-            origin: b"false",
+            origin: "false",
         }
     };
     (null) => {
         Token {
             kind: TokenKind::Null,
-            origin: b"null",
+            origin: "null",
         }
     };
     ('{') => {
         Token {
             kind: TokenKind::LBrace,
-            origin: b"{",
+            origin: "{",
         }
     };
     ('}') => {
         Token {
             kind: TokenKind::RBrace,
-            origin: b"}",
+            origin: "}",
         }
     };
     ('[') => {
         Token {
             kind: TokenKind::LBracket,
-            origin: b"[",
+            origin: "[",
         }
     };
     (']') => {
         Token {
             kind: TokenKind::RBracket,
-            origin: b"]",
+            origin: "]",
         }
     };
     (':') => {
         Token {
             kind: TokenKind::Colon,
-            origin: b":",
+            origin: ":",
         }
     };
     (',') => {
         Token {
             kind: TokenKind::Comma,
-            origin: b",",
+            origin: ",",
         }
     };
     (Illegal) => {
         Token {
             kind: TokenKind::Illegal,
-            origin: b"Illegal",
+            origin: "Illegal",
         }
     };
     (Eof) => {
@@ -320,7 +323,7 @@ mod tests {
 }
 "#;
 
-        let mut lexer = Lexer::new(json.as_bytes());
+        let mut lexer = Lexer::new(json);
 
         let expected_tokens = [
             tok!('{'),
@@ -332,7 +335,7 @@ mod tests {
             tok!(':'),
             Token {
                 kind: TokenKind::Number,
-                origin: b"-42",
+                origin: "-42",
             },
             tok!(','),
             tok!(s "boolean"),
@@ -354,7 +357,7 @@ mod tests {
             tok!(','),
             Token {
                 kind: TokenKind::Number,
-                origin: b"4eee",
+                origin: "4eee",
             },
             tok!(','),
             tok!(s "five"),
@@ -380,7 +383,7 @@ mod tests {
             tok!(','),
             Token {
                 kind: TokenKind::Number,
-                origin: b"3.21865081787e-6",
+                origin: "3.21865081787e-6",
             },
             tok!(','),
             tok!(n 30),
@@ -419,7 +422,7 @@ mod tests {
     fn tokenize_escaped() {
         let json = r#"{"key":"Hello, \"world!\""}"#;
 
-        let mut lexer = Lexer::new(json.as_bytes());
+        let mut lexer = Lexer::new(json);
 
         let expected_tokens = [
             tok!('{'),
@@ -438,7 +441,7 @@ mod tests {
     fn tokenize_invalid_number() {
         let json = r#"{"number": -}"#;
 
-        let mut lexer = Lexer::new(json.as_bytes());
+        let mut lexer = Lexer::new(json);
 
         let expected_tokens = [
             tok!('{'),
@@ -446,7 +449,7 @@ mod tests {
             tok!(':'),
             Token {
                 kind: TokenKind::Illegal,
-                origin: b"-",
+                origin: "-",
             },
             tok!('}'),
         ];

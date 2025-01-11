@@ -8,22 +8,22 @@ use crate::{
 
 macro_rules! expected_token_err {
     ($actual_token:expr, $row:expr, $column:expr, $expected_token:path) => {
-        return Err(ExpectedTokenError {
-            expected: vec![$expected_token],
-            actual: $actual_token.kind,
-            origin: String::from_utf8_lossy($actual_token.origin).to_string(),
-            row: $row,
-            column: $column,
-        })
+        return Err(ExpectedTokenError::with_offset(
+            vec![$expected_token],
+            $actual_token.kind,
+            ($actual_token.origin).to_owned(),
+            $row,
+            $column,
+        ))
     };
     ($actual_token:expr, $row:expr, $column:expr, $( $variant:ident )|+) => {
-        return Err(ExpectedTokenError {
-            expected: vec![$(TokenKind::$variant),+],
-            actual: $actual_token.kind,
-            origin: String::from_utf8_lossy($actual_token.origin).to_string(),
-            row: $row,
-            column: $column,
-        })
+        return Err(ExpectedTokenError::with_offset(
+            vec![$(TokenKind::$variant),+],
+            $actual_token.kind,
+            ($actual_token.origin).to_owned(),
+            $row,
+            $column,
+        ))
     };
 }
 
@@ -35,7 +35,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(input: &'a [u8]) -> Self {
+    pub fn new(input: &'a str) -> Self {
         let mut parser = Self {
             lexer: Lexer::new(input),
             current_token: Token::default(),
@@ -63,25 +63,20 @@ impl<'a> Parser<'a> {
     }
 
     // TODO: Result here?
-    fn parse_string(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        // let s = std::str::from_utf8(literal).expect("literal must be a string");
-        let s = unsafe { std::str::from_utf8_unchecked(literal) };
-
-        Ok(JsonValue::String(s))
+    fn parse_string(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        Ok(JsonValue::String(literal))
     }
 
     // TODO: Result here?
-    fn parse_number(&self, literal: &'a [u8]) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        // let s = std::str::from_utf8(literal).expect("literal must be a string");
-        let s = unsafe { std::str::from_utf8_unchecked(literal) };
-        let n = s.parse::<f64>().map_err(|_| {
-            ExpectedTokenError {
-                expected: todo!(),
-                actual: todo!(),
-                origin: todo!(),
-                row: todo!(),
-                column: todo!(),
-            };
+    fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
+        let n = literal.parse::<f64>().map_err(|_| {
+            ExpectedTokenError::with_offset(
+                vec![TokenKind::Number],
+                TokenKind::Illegal,
+                literal.to_owned(),
+                self.lexer.row,
+                self.lexer.column,
+            )
         })?;
 
         Ok(JsonValue::Number(n))
@@ -113,8 +108,7 @@ impl<'a> Parser<'a> {
     fn parse_property(&mut self, bump: &'a Bump) -> Result<JsonProperty<'a>, ExpectedTokenError> {
         self.expect_peek(TokenKind::String)?;
 
-        // let key = std::str::from_utf8(self.current_token.origin).expect("literal must be a string");
-        let key = unsafe { std::str::from_utf8_unchecked(self.current_token.origin) };
+        let key = self.current_token.origin;
 
         self.expect_peek(TokenKind::Colon)?;
 
@@ -262,7 +256,7 @@ mod tests {
 "#;
 
         let bump = Bump::new();
-        let parser = Parser::new(json.as_bytes());
+        let parser = Parser::new(json);
 
         assert_eq!(
             parser.parse(&bump),
@@ -343,7 +337,7 @@ mod tests {
 "#;
 
         let bump = Bump::new();
-        let parser = Parser::new(json.as_bytes());
+        let parser = Parser::new(json);
 
         assert_eq!(
             parser.parse(&bump),
@@ -360,26 +354,48 @@ mod tests {
     #[test]
     fn parse_invalid_number() {
         let json = r#"
-{
-    "one": 4eee,
-    "two": 2
-}
-"#;
+    {
+        "one": 4eee,
+        "two": 2
+    }
+    "#;
 
         let bump = Bump::new();
-        let parser = Parser::new(json.as_bytes());
+        let parser = Parser::new(json);
 
-        dbg!(&parser.parse(&bump));
+        assert_eq!(
+            parser.parse(&bump),
+            Err(ExpectedTokenError::new(
+                vec![TokenKind::Number],
+                TokenKind::Illegal,
+                "4eee".to_owned(),
+                3,
+                16
+            ))
+        );
+    }
 
-        // assert_eq!(
-        //     parser.parse(&bump),
-        //     Err(ExpectedTokenError {
-        //         expected: vec![TokenKind::Number],
-        //         actual: todo!(),
-        //         origin: todo!(),
-        //         row: todo!(),
-        //         column: todo!()
-        //     })
-        // );
+    #[test]
+    fn parse_invalid_utf8() {
+        let json = r#"
+    {
+        "one": 4èee,
+        "two": 2
+    }
+    "#;
+
+        let bump = Bump::new();
+        let parser = Parser::new(json);
+
+        assert_eq!(
+            parser.parse(&bump),
+            Err(ExpectedTokenError::new(
+                vec![TokenKind::Comma, TokenKind::RBrace],
+                TokenKind::Illegal,
+                "è".to_owned(),
+                3,
+                17
+            ))
+        );
     }
 }

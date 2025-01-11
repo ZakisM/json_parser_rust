@@ -1,16 +1,15 @@
-use std::{fs::File, io::Read};
+use std::fs::{self};
 
 use bumpalo::Bump;
 use json_parser::parser::Parser;
 
 fn main() {
-    let mut file = File::open("./test_data/mesh.json").unwrap();
-    let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes).unwrap();
+    let file = fs::read_to_string("./test_data/event_stacktrace_10kb.json").unwrap();
+    // let mut file = file.as_bytes().to_vec();
 
-    // let root = simd_json::to_borrowed_value(&mut bytes).unwrap();
+    // let root = &simd_json::to_borrowed_value(&mut file);
 
-    let parser = Parser::new(&bytes);
+    let parser = Parser::new(&file);
     let bump = Bump::new();
 
     if let Err(e) = parser.parse(&bump) {
