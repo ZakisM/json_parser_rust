@@ -185,7 +185,7 @@ impl<'a> Parser<'a> {
             (TokenKind::RBrace, TokenKind::Eof)
         ) {
             expected_token_err!(
-                self.current_token,
+                self.peek_token,
                 self.lexer.row,
                 self.lexer.column,
                 TokenKind::Eof
@@ -205,7 +205,7 @@ impl<'a> Parser<'a> {
             (TokenKind::RBracket, TokenKind::Eof)
         ) {
             expected_token_err!(
-                self.current_token,
+                self.peek_token,
                 self.lexer.row,
                 self.lexer.column,
                 TokenKind::Eof
@@ -393,6 +393,35 @@ mod tests {
                 origin: "è".to_owned(),
                 row: 3,
                 column: 17
+            })
+        );
+    }
+
+    #[test]
+    fn parse_invalid_octal() {
+        let json = r#"
+[-65619720000000.61972000000,029]
+    "#;
+
+        let bump = Bump::new();
+        let parser = Parser::new(json);
+
+        assert_eq!(
+            parser.parse(&bump),
+            Err(ExpectedTokenError {
+                expected: vec![
+                    TokenKind::String,
+                    TokenKind::Number,
+                    TokenKind::True,
+                    TokenKind::False,
+                    TokenKind::Null,
+                    TokenKind::LBrace,
+                    TokenKind::LBracket
+                ],
+                actual: TokenKind::Illegal,
+                origin: "0".to_owned(),
+                row: 2,
+                column: 30
             })
         );
     }

@@ -187,7 +187,7 @@ impl<'a> Lexer<'a> {
                     origin: ident,
                 };
             }
-            Some(other) if other == '-' || other.is_ascii_digit() => {
+            Some('-' | '1'..='9') => {
                 let num = self.read_number();
 
                 let kind = match num {
