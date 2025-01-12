@@ -191,8 +191,8 @@ impl<'a> Lexer<'a> {
             Some('-' | '0'..='9') => {
                 let num = self.read_number();
 
-                let kind = match num {
-                    "-" => TokenKind::Illegal,
+                let kind = match num.as_bytes() {
+                    b"-" | [b'0', b'0'..=b'9', ..] => TokenKind::Illegal,
                     _ => TokenKind::Number,
                 };
 

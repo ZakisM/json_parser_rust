@@ -67,16 +67,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        if matches!(literal.as_bytes(), &[b'0', b'0'..=b'9', ..]) {
-            return Err(ExpectedTokenError::with_offset(
-                vec![TokenKind::Number],
-                TokenKind::Illegal,
-                literal.to_owned(),
-                self.lexer.row,
-                self.lexer.column,
-            ));
-        };
-
         let n = literal.parse::<f64>().map_err(|_| {
             ExpectedTokenError::with_offset(
                 vec![TokenKind::Number],
@@ -438,7 +428,15 @@ mod tests {
         assert_eq!(
             parser.parse(&bump),
             Err(ExpectedTokenError {
-                expected: vec![TokenKind::Number],
+                expected: vec![
+                    TokenKind::String,
+                    TokenKind::Number,
+                    TokenKind::True,
+                    TokenKind::False,
+                    TokenKind::Null,
+                    TokenKind::LBrace,
+                    TokenKind::LBracket
+                ],
                 actual: TokenKind::Illegal,
                 origin: "029".to_owned(),
                 row: 2,
