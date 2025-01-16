@@ -1,0 +1,56 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/hdfs_log.json
+snapshot_kind: text
+---
+Ok(
+    Object(
+        [
+            JsonProperty {
+                key: "timestamp",
+                value: Number(
+                    1440670491.0,
+                ),
+            },
+            JsonProperty {
+                key: "severity_text",
+                value: String(
+                    "INFO",
+                ),
+            },
+            JsonProperty {
+                key: "body",
+                value: String(
+                    "PacketResponder: BP-108841162-10.10.34.11-1440074360971:blk_1073836024_95200, type=HAS_DOWNSTREAM_IN_PIPELINE terminating",
+                ),
+            },
+            JsonProperty {
+                key: "resource",
+                value: Object(
+                    [
+                        JsonProperty {
+                            key: "$facet:service",
+                            value: String(
+                                "datanode/03",
+                            ),
+                        },
+                    ],
+                ),
+            },
+            JsonProperty {
+                key: "attributes",
+                value: Object(
+                    [
+                        JsonProperty {
+                            key: "class",
+                            value: String(
+                                "org.apache.hadoop.hdfs.server.datanode.DataNode",
+                            ),
+                        },
+                    ],
+                ),
+            },
+        ],
+    ),
+)

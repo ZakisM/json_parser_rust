@@ -231,6 +231,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use super::*;
 
     #[test]
@@ -327,5 +329,17 @@ mod tests {
         let parser = Parser::new(json);
 
         insta::assert_debug_snapshot!(parser.parse(&bump));
+    }
+
+    #[test]
+    fn parse_test_data() {
+        insta::glob!("../../test_data", "*.json", |path| {
+            let input = fs::read_to_string(path).unwrap();
+
+            let bump = Bump::new();
+            let parser = Parser::new(&input);
+
+            insta::assert_debug_snapshot!(parser.parse(&bump));
+        });
     }
 }

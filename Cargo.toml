@@ -14,7 +14,7 @@ bumpalo = { version = "3.16.0", features = ["collections"] }
 json_parser = { path = "./json_parser" }
 
 [workspace.dependencies]
-insta = "1.42.0"
+insta = { version = "1.42.0", features = ["glob"] }
 
 [lib]
 crate-type = ["cdylib"]

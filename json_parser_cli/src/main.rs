@@ -11,14 +11,14 @@ fn main() {
         panic!("missing path")
     };
 
-    let file = fs::read_to_string(path).unwrap();
+    let input = fs::read_to_string(path).unwrap();
     // let mut file = file.as_bytes().to_vec();
 
     // let root = simd_json::to_borrowed_value(&mut file);
     // dbg!(&root);
 
-    let parser = Parser::new(&file);
     let bump = Bump::new();
+    let parser = Parser::new(&input);
 
     match parser.parse(&bump) {
         Ok(res) => println!("{res:#?}"),
