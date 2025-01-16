@@ -4,12 +4,15 @@ expression: parser.parse(&bump)
 input_file: test_data/fail/fail25.json
 snapshot_kind: text
 ---
-Ok(
-    Array(
-        [
-            String(
-                "\ttab\tcharacter\tin\tstring\t",
-            ),
+Err(
+    ExpectedTokenError {
+        expected: [
+            Comma,
+            RBracket,
         ],
-    ),
+        actual: Illegal,
+        origin: "tab",
+        row: 1,
+        column: 4,
+    },
 )

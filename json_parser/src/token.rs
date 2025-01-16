@@ -150,6 +150,8 @@ impl<'a> Lexer<'a> {
                     self.read_char();
                     break;
                 }
+                // TODO: Tabs are illegal in strings?
+                Some('\t') => break,
                 Some('\\') if matches!(self.chars.peek(), Some('"' | '\\')) => self.read_char(),
                 None => break,
                 _ => continue,
@@ -170,10 +172,11 @@ impl<'a> Lexer<'a> {
             Some(':') => TokenKind::Colon,
             Some(',') => TokenKind::Comma,
             Some('"') => {
+                // TODO: Move to make it return error
                 return Token {
                     kind: TokenKind::String,
                     origin: self.read_string(),
-                }
+                };
             }
             Some('t' | 'f' | 'n') => {
                 let ident = self.read_ident();
@@ -193,6 +196,7 @@ impl<'a> Lexer<'a> {
             Some('-' | '0'..='9') => {
                 let num = self.read_number();
 
+                // TODO: Move to make it return error
                 let kind = match num.as_bytes() {
                     b"-" | [b'0', b'0'..=b'9', ..] => TokenKind::Illegal,
                     _ => TokenKind::Number,
