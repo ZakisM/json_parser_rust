@@ -88,8 +88,10 @@ impl<'a> Lexer<'a> {
                 self.read_position += ch.len_utf8();
             }
             None => {
-                self.read_position = self.input.len();
                 self.ch = None;
+
+                self.position = self.read_position;
+                self.read_position += 1;
             }
         }
     }
@@ -198,11 +200,13 @@ impl<'a> Lexer<'a> {
 
                 return Token { kind, origin: num };
             }
-            _ if self.read_position == self.input.len() => {
+            _ if self.position == self.input.len() => {
+                self.read_char();
+
                 return Token {
                     kind: TokenKind::Eof,
                     ..Default::default()
-                }
+                };
             }
             _ => TokenKind::Illegal,
         };
@@ -215,86 +219,16 @@ impl<'a> Lexer<'a> {
     }
 }
 
-#[macro_export]
-macro_rules! tok {
-    (s $string:literal) => {
-        Token {
-            kind: TokenKind::String,
-            origin: $string,
+impl<'a> Iterator for Lexer<'a> {
+    type Item = Token<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.position > self.input.len() {
+            return None;
         }
-    };
-    (n $number:literal) => {
-        Token {
-            kind: TokenKind::Number,
-            origin: stringify!($number),
-        }
-    };
-    (true) => {
-        Token {
-            kind: TokenKind::True,
-            origin: "true",
-        }
-    };
-    (false) => {
-        Token {
-            kind: TokenKind::False,
-            origin: "false",
-        }
-    };
-    (null) => {
-        Token {
-            kind: TokenKind::Null,
-            origin: "null",
-        }
-    };
-    ('{') => {
-        Token {
-            kind: TokenKind::LBrace,
-            origin: "{",
-        }
-    };
-    ('}') => {
-        Token {
-            kind: TokenKind::RBrace,
-            origin: "}",
-        }
-    };
-    ('[') => {
-        Token {
-            kind: TokenKind::LBracket,
-            origin: "[",
-        }
-    };
-    (']') => {
-        Token {
-            kind: TokenKind::RBracket,
-            origin: "]",
-        }
-    };
-    (':') => {
-        Token {
-            kind: TokenKind::Colon,
-            origin: ":",
-        }
-    };
-    (',') => {
-        Token {
-            kind: TokenKind::Comma,
-            origin: ",",
-        }
-    };
-    (Illegal) => {
-        Token {
-            kind: TokenKind::Illegal,
-            origin: "Illegal",
-        }
-    };
-    (Eof) => {
-        Token {
-            kind: TokenKind::Eof,
-            ..Default::default()
-        }
-    };
+
+        Some(self.next_token())
+    }
 }
 
 #[cfg(test)]
@@ -320,139 +254,26 @@ mod tests {
 }
 "#;
 
-        let mut lexer = Lexer::new(json);
+        let lexer = Lexer::new(json);
 
-        let expected_tokens = [
-            tok!('{'),
-            tok!(s "string"),
-            tok!(':'),
-            tok!(s "Hello, world!"),
-            tok!(','),
-            tok!(s "number"),
-            tok!(':'),
-            Token {
-                kind: TokenKind::Number,
-                origin: "-42",
-            },
-            tok!(','),
-            tok!(s "boolean"),
-            tok!(':'),
-            tok!(true),
-            tok!(','),
-            tok!(s "null"),
-            tok!(':'),
-            tok!(null),
-            tok!(','),
-            tok!(s "array"),
-            tok!(':'),
-            tok!('['),
-            tok!(n 1),
-            tok!(','),
-            tok!(n 2),
-            tok!(','),
-            tok!(n 3),
-            tok!(','),
-            Token {
-                kind: TokenKind::Number,
-                origin: "4eee",
-            },
-            tok!(','),
-            tok!(s "five"),
-            tok!(','),
-            tok!(true),
-            tok!(']'),
-            tok!(','),
-            tok!(s "nested_object"),
-            tok!(':'),
-            tok!('{'),
-            tok!(s "nested_string"),
-            tok!(':'),
-            tok!(s "This is a nested string"),
-            tok!(','),
-            tok!(s "nested_number"),
-            tok!(':'),
-            tok!(n 100),
-            tok!(','),
-            tok!(s "nested_array"),
-            tok!(':'),
-            tok!('['),
-            tok!(n 10),
-            tok!(','),
-            Token {
-                kind: TokenKind::Number,
-                origin: "3.21865081787e-6",
-            },
-            tok!(','),
-            tok!(n 30),
-            tok!(']'),
-            tok!(','),
-            tok!(s "nested_boolean"),
-            tok!(':'),
-            tok!(false),
-            tok!('}'),
-            tok!(','),
-            tok!(s "another_nested_object"),
-            tok!(':'),
-            tok!('{'),
-            tok!(s "level1"),
-            tok!(':'),
-            tok!('{'),
-            tok!(s "level2"),
-            tok!(':'),
-            tok!('{'),
-            tok!(s "key"),
-            tok!(':'),
-            tok!(s "value"),
-            tok!('}'),
-            tok!('}'),
-            tok!('}'),
-            tok!('}'),
-            tok!(Eof),
-        ];
-
-        for tok in expected_tokens {
-            assert_eq!(lexer.next_token(), tok);
-        }
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
     }
 
     #[test]
     fn tokenize_escaped() {
         let json = r#"{"key":"Hello, \"world!\""}"#;
 
-        let mut lexer = Lexer::new(json);
+        let lexer = Lexer::new(json);
 
-        let expected_tokens = [
-            tok!('{'),
-            tok!(s "key"),
-            tok!(':'),
-            tok!(s r#"Hello, \"world!\""#),
-            tok!('}'),
-        ];
-
-        for tok in expected_tokens {
-            assert_eq!(lexer.next_token(), tok);
-        }
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
     }
 
     #[test]
     fn tokenize_invalid_number() {
         let json = r#"{"number": -}"#;
 
-        let mut lexer = Lexer::new(json);
+        let lexer = Lexer::new(json);
 
-        let expected_tokens = [
-            tok!('{'),
-            tok!(s "number"),
-            tok!(':'),
-            Token {
-                kind: TokenKind::Illegal,
-                origin: "-",
-            },
-            tok!('}'),
-        ];
-
-        for tok in expected_tokens {
-            assert_eq!(lexer.next_token(), tok);
-        }
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
     }
 }

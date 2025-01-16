@@ -1,0 +1,311 @@
+---
+source: json_parser/src/token.rs
+expression: "&lexer.collect::<Vec<_>>()"
+snapshot_kind: text
+---
+[
+    Token {
+        kind: LBrace,
+        origin: "{",
+    },
+    Token {
+        kind: String,
+        origin: "string",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: String,
+        origin: "Hello, world!",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "number",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: Number,
+        origin: "-42",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "boolean",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: True,
+        origin: "true",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "null",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: Null,
+        origin: "null",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "array",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: LBracket,
+        origin: "[",
+    },
+    Token {
+        kind: Number,
+        origin: "1",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: Number,
+        origin: "2",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: Number,
+        origin: "3",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: Number,
+        origin: "4eee",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "five",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: True,
+        origin: "true",
+    },
+    Token {
+        kind: RBracket,
+        origin: "]",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "nested_object",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+    },
+    Token {
+        kind: String,
+        origin: "nested_string",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: String,
+        origin: "This is a nested string",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "nested_number",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: Number,
+        origin: "100",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "nested_array",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: LBracket,
+        origin: "[",
+    },
+    Token {
+        kind: Number,
+        origin: "10",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: Number,
+        origin: "3.21865081787e-6",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: Number,
+        origin: "30",
+    },
+    Token {
+        kind: RBracket,
+        origin: "]",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "nested_boolean",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: False,
+        origin: "false",
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+    },
+    Token {
+        kind: String,
+        origin: "another_nested_object",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+    },
+    Token {
+        kind: String,
+        origin: "level1",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+    },
+    Token {
+        kind: String,
+        origin: "level2",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+    },
+    Token {
+        kind: String,
+        origin: "key",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: String,
+        origin: "value",
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+    },
+    Token {
+        kind: Eof,
+        origin: "",
+    },
+]
