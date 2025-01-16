@@ -1,0 +1,16 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+snapshot_kind: text
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            Number,
+        ],
+        actual: Illegal,
+        origin: "4eee",
+        row: 3,
+        column: 16,
+    },
+)

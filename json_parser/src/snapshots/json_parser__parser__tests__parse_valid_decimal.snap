@@ -1,0 +1,17 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+snapshot_kind: text
+---
+Ok(
+    Array(
+        [
+            Number(
+                -65619720000000.62,
+            ),
+            Number(
+                0.29,
+            ),
+        ],
+    ),
+)

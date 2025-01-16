@@ -232,7 +232,6 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bumpalo::vec as bump_vec;
 
     #[test]
     fn parse_top_level_object() {
@@ -256,71 +255,7 @@ mod tests {
         let bump = Bump::new();
         let parser = Parser::new(json);
 
-        assert_eq!(
-            parser.parse(&bump),
-            Ok(JsonValue::Object(bump_vec![in &bump;
-                JsonProperty::from(("string", JsonValue::String("Hello, world!"))),
-                JsonProperty::from(("number", JsonValue::Number(-42.0))),
-                JsonProperty::from((
-                    "nested_object",
-                    JsonValue::Object(bump_vec![
-                        in &bump;
-                        JsonProperty::from((
-                            "nested_string",
-                            JsonValue::String("This is a nested string")
-                        )),
-                        JsonProperty::from((
-                            "nested_number",
-                            JsonValue::Array(bump_vec![
-                                in &bump;
-                                JsonValue::Number(100.0),
-                                JsonValue::Number(3.21865081787e-6),
-                                JsonValue::Number(300.0),
-                                JsonValue::Array(bump_vec![
-                                    in &bump;
-                                    JsonValue::Number(400.0),
-                                    JsonValue::Number(-500.0),
-                                    JsonValue::Array(bump_vec![
-                                        in &bump;
-                                        JsonValue::Number(600.0),
-                                        JsonValue::Array(bump_vec![
-                                            in &bump;
-                                            JsonValue::Number(700.0),
-                                            JsonValue::Object(bump_vec![
-                                                in &bump;
-                                                JsonProperty::from(("secret", JsonValue::Number(12345.0)
-                                            ))])
-                                        ])
-                                    ])
-                                ])
-                            ])
-                        ))
-                    ])
-                )),
-                JsonProperty::from(("boolean", JsonValue::Boolean(true))),
-                JsonProperty::from(("nested_deep_empty_array", JsonValue::Array(bump_vec![
-                    in &bump;
-                    JsonValue::Array(bump_vec![
-                        in &bump;
-                        JsonValue::Array(bump_vec![
-                            in &bump;
-                        ])
-                    ]),
-                    JsonValue::Object(bump_vec![
-                        in &bump;
-                    ])
-                ]))),
-                JsonProperty::from(("nested_empties", JsonValue::Object(bump_vec![
-                    in &bump;
-                    JsonProperty::from(("empty_object", JsonValue::Object(bump_vec![
-                        in &bump;
-                    ]))),
-                    JsonProperty::from(("empty_array", JsonValue::Array(bump_vec![
-                        in &bump;
-                    ])))
-                ]))),
-            ]))
-        );
+        insta::assert_debug_snapshot!(parser.parse(&bump));
     }
 
     #[test]
@@ -337,16 +272,7 @@ mod tests {
         let bump = Bump::new();
         let parser = Parser::new(json);
 
-        assert_eq!(
-            parser.parse(&bump),
-            Ok(JsonValue::Array(bump_vec![
-                in &bump;
-                JsonValue::Object(bump_vec![
-                    in &bump;
-                    JsonProperty::from(("one", JsonValue::Number(1.0))),
-                    JsonProperty::from(("zero", JsonValue::Number(0.0)))
-            ])]))
-        );
+        insta::assert_debug_snapshot!(parser.parse(&bump));
     }
 
     #[test]
@@ -361,16 +287,7 @@ mod tests {
         let bump = Bump::new();
         let parser = Parser::new(json);
 
-        assert_eq!(
-            parser.parse(&bump),
-            Err(ExpectedTokenError {
-                expected: vec![TokenKind::Number],
-                actual: TokenKind::Illegal,
-                origin: "4eee".to_owned(),
-                row: 3,
-                column: 16
-            })
-        );
+        insta::assert_debug_snapshot!(parser.parse(&bump));
     }
 
     #[test]
@@ -385,16 +302,7 @@ mod tests {
         let bump = Bump::new();
         let parser = Parser::new(json);
 
-        assert_eq!(
-            parser.parse(&bump),
-            Err(ExpectedTokenError {
-                expected: vec![TokenKind::Comma, TokenKind::RBrace],
-                actual: TokenKind::Illegal,
-                origin: "è".to_owned(),
-                row: 3,
-                column: 17
-            })
-        );
+        insta::assert_debug_snapshot!(parser.parse(&bump));
     }
 
     #[test]
@@ -406,14 +314,7 @@ mod tests {
         let bump = Bump::new();
         let parser = Parser::new(json);
 
-        assert_eq!(
-            parser.parse(&bump),
-            Ok(JsonValue::Array(bump_vec![
-                in &bump;
-                JsonValue::Number(-65619720000000.62),
-                JsonValue::Number(0.29)
-            ]))
-        );
+        insta::assert_debug_snapshot!(parser.parse(&bump));
     }
 
     #[test]
@@ -425,23 +326,6 @@ mod tests {
         let bump = Bump::new();
         let parser = Parser::new(json);
 
-        assert_eq!(
-            parser.parse(&bump),
-            Err(ExpectedTokenError {
-                expected: vec![
-                    TokenKind::String,
-                    TokenKind::Number,
-                    TokenKind::True,
-                    TokenKind::False,
-                    TokenKind::Null,
-                    TokenKind::LBrace,
-                    TokenKind::LBracket
-                ],
-                actual: TokenKind::Illegal,
-                origin: "029".to_owned(),
-                row: 2,
-                column: 34
-            })
-        );
+        insta::assert_debug_snapshot!(parser.parse(&bump));
     }
 }
