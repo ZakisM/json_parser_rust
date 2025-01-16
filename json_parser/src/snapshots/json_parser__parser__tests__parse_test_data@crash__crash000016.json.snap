@@ -1,0 +1,322 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/crash/crash000016.json
+snapshot_kind: text
+---
+Ok(
+    Array(
+        [
+            String(
+                "JSON Test Pattern pass1",
+            ),
+            Object(
+                [
+                    JsonProperty {
+                        key: "object with 1 member",
+                        value: Array(
+                            [
+                                String(
+                                    "array with 1 element",
+                                ),
+                            ],
+                        ),
+                    },
+                ],
+            ),
+            Object(
+                [],
+            ),
+            Array(
+                [],
+            ),
+            Number(
+                -42.0,
+            ),
+            Boolean(
+                true,
+            ),
+            Boolean(
+                false,
+            ),
+            Null,
+            Object(
+                [
+                    JsonProperty {
+                        key: "integer",
+                        value: Number(
+                            1234567890.0,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "real",
+                        value: Number(
+                            -9876.54321,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "e",
+                        value: Number(
+                            1.23456789e-13,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "E",
+                        value: Number(
+                            1.23456789e34,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "",
+                        value: Number(
+                            2.3456789012e76,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "zero",
+                        value: Number(
+                            0.0,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "one",
+                        value: Number(
+                            1.0,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "space",
+                        value: String(
+                            " ",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "quote",
+                        value: String(
+                            "\\\"",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "backslash",
+                        value: String(
+                            "\\\\",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "controls",
+                        value: String(
+                            "\\b\\f\\n\\r\\t",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "slash",
+                        value: String(
+                            "/ & \\/",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "alpha",
+                        value: String(
+                            "abcdefghijklmnopqrstuvwyz",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "ALPHA",
+                        value: String(
+                            "ABCDEFGHIJKLMNOPQRSTUVWYZ",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "digit",
+                        value: String(
+                            "0123456789",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "0123456789",
+                        value: String(
+                            "digit",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "special",
+                        value: String(
+                            "`1~!@#$%^&*()_+-={':[,]}|;.</>?",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "hex",
+                        value: String(
+                            "\\u0123\\u4567\\u89AB\\uCDEF\\uabcd\\uef4A",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "true",
+                        value: Boolean(
+                            true,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "false",
+                        value: Boolean(
+                            false,
+                        ),
+                    },
+                    JsonProperty {
+                        key: "null",
+                        value: Null,
+                    },
+                    JsonProperty {
+                        key: "array",
+                        value: Array(
+                            [],
+                        ),
+                    },
+                    JsonProperty {
+                        key: "object",
+                        value: Object(
+                            [],
+                        ),
+                    },
+                    JsonProperty {
+                        key: "address",
+                        value: String(
+                            "50 St. James z",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "ALPHA",
+                        value: String(
+                            "ABCDStreet",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "url",
+                        value: String(
+                            "http://www.JSON.org/",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "comment",
+                        value: String(
+                            "// /* <!-- --",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "# -- --> */",
+                        value: String(
+                            " ",
+                        ),
+                    },
+                    JsonProperty {
+                        key: " s p a c e d ",
+                        value: Array(
+                            [
+                                Number(
+                                    1.0,
+                                ),
+                                Number(
+                                    2.0,
+                                ),
+                                Number(
+                                    3.0,
+                                ),
+                                Number(
+                                    4.0,
+                                ),
+                                Number(
+                                    5.0,
+                                ),
+                                Number(
+                                    6.0,
+                                ),
+                                Number(
+                                    7.0,
+                                ),
+                            ],
+                        ),
+                    },
+                    JsonProperty {
+                        key: "compact",
+                        value: Array(
+                            [
+                                Number(
+                                    1.0,
+                                ),
+                                Number(
+                                    2.0,
+                                ),
+                                Number(
+                                    3.0,
+                                ),
+                                Number(
+                                    4.0,
+                                ),
+                                Number(
+                                    5.0,
+                                ),
+                                Number(
+                                    6.0,
+                                ),
+                                Number(
+                                    7.0,
+                                ),
+                            ],
+                        ),
+                    },
+                    JsonProperty {
+                        key: "jsontext",
+                        value: String(
+                            "{\\\"object with 1 member\\\":[\\\"array with 1 element\\\"]}",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "quotes",
+                        value: String(
+                            "&#34; \\u0022 %22 0x22 034 &#x22;",
+                        ),
+                    },
+                    JsonProperty {
+                        key: "\\/\\\\\\\"\\uCAFE\\uBABE\\uDB98\\uFCDE\\ubcda\\uef4A\\b\\f\\n\\r\\t`R~!@#$%^&*()_+-=[]{}|;:',./<>?",
+                        value: String(
+                            "A key can be any string",
+                        ),
+                    },
+                ],
+            ),
+            Number(
+                0.5,
+            ),
+            Number(
+                98.6,
+            ),
+            Number(
+                99.44,
+            ),
+            Number(
+                1066.0,
+            ),
+            Number(
+                10.0,
+            ),
+            Number(
+                1.0,
+            ),
+            Number(
+                0.1,
+            ),
+            Number(
+                1.0,
+            ),
+            Number(
+                2.0,
+            ),
+            Number(
+                2.0,
+            ),
+            String(
+                "rosebud",
+            ),
+        ],
+    ),
+)

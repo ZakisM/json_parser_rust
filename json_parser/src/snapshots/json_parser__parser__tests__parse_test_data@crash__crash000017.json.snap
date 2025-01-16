@@ -1,0 +1,18 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/crash/crash000017.json
+snapshot_kind: text
+---
+Ok(
+    Object(
+        [
+            JsonProperty {
+                key: "na\\ud800\\uE876e",
+                value: String(
+                    "\\u00\\uggggiy",
+                ),
+            },
+        ],
+    ),
+)

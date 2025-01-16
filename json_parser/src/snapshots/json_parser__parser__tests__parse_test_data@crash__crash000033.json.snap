@@ -1,0 +1,17 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/crash/crash000033.json
+snapshot_kind: text
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            Number,
+        ],
+        actual: Illegal,
+        origin: "28033333333333333333333333333333333348253421170679.6170-",
+        row: 1,
+        column: 4,
+    },
+)

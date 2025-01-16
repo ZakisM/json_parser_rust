@@ -1,0 +1,18 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/fail/fail40_s64boverflow.json
+snapshot_kind: text
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            LBrace,
+            LBracket,
+        ],
+        actual: Illegal,
+        origin: "",
+        row: 1,
+        column: 20,
+    },
+)

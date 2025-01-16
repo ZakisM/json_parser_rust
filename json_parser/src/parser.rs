@@ -333,8 +333,8 @@ mod tests {
 
     #[test]
     fn parse_test_data() {
-        insta::glob!("../../test_data", "*.json", |path| {
-            let input = fs::read_to_string(path).unwrap();
+        insta::glob!("../../test_data", "**/*.json", |path| {
+            let input = fs::read_to_string(path).expect(&format!("failed to read {path:?}"));
 
             let bump = Bump::new();
             let parser = Parser::new(&input);
