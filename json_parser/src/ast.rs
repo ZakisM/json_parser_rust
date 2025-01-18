@@ -1,7 +1,7 @@
 use bumpalo::collections::Vec;
 use std::{borrow::Cow, collections::BTreeMap};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct JsonProperty<'a> {
     pub key: Cow<'a, str>,
     pub value: JsonValue<'a>,
@@ -26,10 +26,7 @@ pub enum JsonValue<'a> {
     Array(Vec<'a, JsonValue<'a>>),
 }
 
-// TODO: Definitely wrong
-impl std::cmp::Eq for JsonValue<'_> {}
-
-impl<'a> JsonValue<'a> {
+impl JsonValue<'_> {
     fn inner_value(&self) -> String {
         match self {
             JsonValue::Null => "null".to_owned(),

@@ -139,11 +139,7 @@ impl<'a> Lexer<'a> {
         &self.input[start_pos..self.position]
     }
 
-    // { "name": "\uda00\ud800\uggggxy" }
-    // { "name": "\u1234": }
-    // { "name": "\uda"
-
-    fn validate_unicode(&mut self) -> bool {
+    fn is_legal_unicode(&mut self) -> bool {
         let start_pos = self.position;
 
         for _ in 0..4 {
@@ -154,21 +150,33 @@ impl<'a> Lexer<'a> {
             self.read_char();
         }
 
-        let unicode_str = &self.input[start_pos..self.position];
+        let codepoint = &self.input[start_pos..self.position];
 
-        if unicode_str.len() != 4 {
+        if codepoint.len() != 4 {
             return false;
         }
 
-        u32::from_str_radix(unicode_str, 16).is_ok_and(|v| v <= 0x10FFFF)
+        u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF)
     }
 
-    // "\"
+    fn is_legal_escaped_character(&mut self) -> bool {
+        match self.ch {
+            Some('"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't') => {
+                self.read_char();
+                true
+            }
+            Some('u') => {
+                self.read_char();
+                self.is_legal_unicode()
+            }
+            _ => false,
+        }
+    }
 
     fn read_string(&mut self) -> (&'a str, bool) {
         let start_pos = self.position;
 
-        let mut illegal_found = false;
+        let mut legal = true;
 
         loop {
             match self.ch {
@@ -176,25 +184,12 @@ impl<'a> Lexer<'a> {
                     self.read_char();
                     break;
                 }
-                Some('\\') => match self.chars.peek() {
-                    Some('"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't') => {
-                        self.read_char();
-                    }
-                    Some('u') => {
-                        self.read_char();
-                        self.read_char();
-
-                        if !self.validate_unicode() {
-                            illegal_found = true;
-                        }
-
-                        continue;
-                    }
-                    _ => {
-                        illegal_found = true;
-                    }
-                },
-                Some('\t') => illegal_found = true,
+                Some('\\') => {
+                    self.read_char();
+                    legal = self.is_legal_escaped_character();
+                    continue;
+                }
+                Some('\t') => legal = false,
                 None => break,
                 _ => (),
             };
@@ -202,7 +197,7 @@ impl<'a> Lexer<'a> {
             self.read_char();
         }
 
-        (&self.input[start_pos..self.position - 1], illegal_found)
+        (&self.input[start_pos..self.position - 1], legal)
     }
 
     pub fn next_token(&mut self) -> Token<'a> {
@@ -218,11 +213,11 @@ impl<'a> Lexer<'a> {
             Some('"') => {
                 self.read_char();
 
-                let (str, illegal_found) = self.read_string();
-                let kind = if illegal_found {
-                    TokenKind::Illegal
-                } else {
+                let (str, legal) = self.read_string();
+                let kind = if legal {
                     TokenKind::String
+                } else {
+                    TokenKind::Illegal
                 };
 
                 return Token { kind, origin: str };
@@ -245,7 +240,6 @@ impl<'a> Lexer<'a> {
             Some('-' | '0'..='9') => {
                 let num = self.read_number();
 
-                // TODO: Move to make it return error
                 let kind = match num.as_bytes() {
                     b"-" | [b'0', b'0'..=b'9', ..] => TokenKind::Illegal,
                     _ => TokenKind::Number,
