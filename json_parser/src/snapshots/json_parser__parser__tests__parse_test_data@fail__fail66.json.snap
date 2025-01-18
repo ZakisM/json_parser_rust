@@ -4,15 +4,20 @@ expression: parser.parse(&bump)
 input_file: test_data/fail/fail66.json
 snapshot_kind: text
 ---
-Ok(
-    Object(
-        [
-            JsonProperty {
-                key: "name",
-                value: String(
-                    "\\uda00\\ud800\\uggggxy",
-                ),
-            },
+Err(
+    ExpectedTokenError {
+        expected: [
+            String,
+            Number,
+            True,
+            False,
+            Null,
+            LBrace,
+            LBracket,
         ],
-    ),
+        actual: Illegal,
+        origin: "\\uda00\\ud800\\uggggxy",
+        row: 1,
+        column: 13,
+    },
 )

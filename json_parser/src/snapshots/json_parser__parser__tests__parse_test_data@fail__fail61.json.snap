@@ -4,15 +4,20 @@ expression: parser.parse(&bump)
 input_file: test_data/fail/fail61.json
 snapshot_kind: text
 ---
-Ok(
-    Object(
-        [
-            JsonProperty {
-                key: "badescape",
-                value: String(
-                    "\\uxhgj",
-                ),
-            },
+Err(
+    ExpectedTokenError {
+        expected: [
+            String,
+            Number,
+            True,
+            False,
+            Null,
+            LBrace,
+            LBracket,
         ],
-    ),
+        actual: Illegal,
+        origin: "\\uxhgj",
+        row: 1,
+        column: 16,
+    },
 )

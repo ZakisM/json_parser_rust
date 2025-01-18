@@ -4,12 +4,20 @@ expression: parser.parse(&bump)
 input_file: test_data/fail/fail28.json
 snapshot_kind: text
 ---
-Ok(
-    Array(
-        [
-            String(
-                "line\\\nbreak",
-            ),
+Err(
+    ExpectedTokenError {
+        expected: [
+            String,
+            Number,
+            True,
+            False,
+            Null,
+            LBrace,
+            LBracket,
         ],
-    ),
+        actual: Illegal,
+        origin: "line\\\nbreak",
+        row: 1,
+        column: 4,
+    },
 )

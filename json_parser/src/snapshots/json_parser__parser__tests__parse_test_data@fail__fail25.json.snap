@@ -7,11 +7,16 @@ snapshot_kind: text
 Err(
     ExpectedTokenError {
         expected: [
-            Comma,
-            RBracket,
+            String,
+            Number,
+            True,
+            False,
+            Null,
+            LBrace,
+            LBracket,
         ],
         actual: Illegal,
-        origin: "tab",
+        origin: "\ttab\tcharacter\tin\tstring\t",
         row: 1,
         column: 4,
     },

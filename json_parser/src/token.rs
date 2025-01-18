@@ -139,26 +139,70 @@ impl<'a> Lexer<'a> {
         &self.input[start_pos..self.position]
     }
 
-    fn read_string(&mut self) -> &'a str {
-        let start_pos = self.position + 1;
+    // { "name": "\uda00\ud800\uggggxy" }
+    // { "name": "\u1234": }
+    // { "name": "\uda"
+
+    fn validate_unicode(&mut self) -> bool {
+        let start_pos = self.position;
+
+        for _ in 0..4 {
+            if !matches!(self.ch, Some('0'..='9' | 'a'..='f' | 'A'..='F')) {
+                break;
+            }
+
+            self.read_char();
+        }
+
+        let unicode_str = &self.input[start_pos..self.position];
+
+        if unicode_str.len() != 4 {
+            return false;
+        }
+
+        u32::from_str_radix(unicode_str, 16).is_ok_and(|v| v <= 0x10FFFF)
+    }
+
+    // "\"
+
+    fn read_string(&mut self) -> (&'a str, bool) {
+        let start_pos = self.position;
+
+        let mut illegal_found = false;
 
         loop {
-            self.read_char();
-
             match self.ch {
                 Some('"') => {
                     self.read_char();
                     break;
                 }
-                // TODO: Tabs are illegal in strings?
-                Some('\t') => break,
-                Some('\\') if matches!(self.chars.peek(), Some('"' | '\\')) => self.read_char(),
+                Some('\\') => match self.chars.peek() {
+                    Some('"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't') => {
+                        self.read_char();
+                    }
+                    Some('u') => {
+                        self.read_char();
+                        self.read_char();
+
+                        if !self.validate_unicode() {
+                            illegal_found = true;
+                        }
+
+                        continue;
+                    }
+                    _ => {
+                        illegal_found = true;
+                    }
+                },
+                Some('\t') => illegal_found = true,
                 None => break,
-                _ => continue,
+                _ => (),
             };
+
+            self.read_char();
         }
 
-        &self.input[start_pos..self.position - 1]
+        (&self.input[start_pos..self.position - 1], illegal_found)
     }
 
     pub fn next_token(&mut self) -> Token<'a> {
@@ -172,11 +216,16 @@ impl<'a> Lexer<'a> {
             Some(':') => TokenKind::Colon,
             Some(',') => TokenKind::Comma,
             Some('"') => {
-                // TODO: Move to make it return error
-                return Token {
-                    kind: TokenKind::String,
-                    origin: self.read_string(),
+                self.read_char();
+
+                let (str, illegal_found) = self.read_string();
+                let kind = if illegal_found {
+                    TokenKind::Illegal
+                } else {
+                    TokenKind::String
                 };
+
+                return Token { kind, origin: str };
             }
             Some('t' | 'f' | 'n') => {
                 let ident = self.read_ident();
@@ -275,6 +324,60 @@ mod tests {
     #[test]
     fn tokenize_invalid_number() {
         let json = r#"{"number": -}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_valid_unicode_1() {
+        let json = r#"{"key": "\u1234"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_valid_unicode_2() {
+        let json = r#"{"key": "\u12345"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_valid_unicode_3() {
+        let json = r#"{"key": "\udbcd"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_unicode() {
+        let json = r#"{"key": "\uda00"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_unicode_length_1() {
+        let json = r#"{"key": "\u"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_unicode_length_2() {
+        let json = r#"{"key": "\u1"}"#;
 
         let lexer = Lexer::new(json);
 
