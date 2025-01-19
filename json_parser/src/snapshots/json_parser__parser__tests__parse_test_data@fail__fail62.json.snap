@@ -7,12 +7,17 @@ snapshot_kind: text
 Err(
     ExpectedTokenError {
         expected: [
-            Comma,
-            RBrace,
+            String,
+            Number,
+            True,
+            False,
+            Null,
+            LBrace,
+            LBracket,
         ],
-        actual: Eof,
-        origin: "",
+        actual: Illegal,
+        origin: "baa}\n",
         row: 1,
-        column: 13,
+        column: 8,
     },
 )

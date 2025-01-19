@@ -1,0 +1,27 @@
+---
+source: json_parser/src/token.rs
+expression: "&lexer.collect::<Vec<_>>()"
+snapshot_kind: text
+---
+[
+    Token {
+        kind: LBrace,
+        origin: "{",
+    },
+    Token {
+        kind: String,
+        origin: "key",
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+    },
+    Token {
+        kind: Illegal,
+        origin: "\\}",
+    },
+    Token {
+        kind: Eof,
+        origin: "",
+    },
+]

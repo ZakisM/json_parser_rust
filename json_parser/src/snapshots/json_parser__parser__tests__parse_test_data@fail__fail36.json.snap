@@ -7,12 +7,17 @@ snapshot_kind: text
 Err(
     ExpectedTokenError {
         expected: [
-            Comma,
-            RBracket,
+            String,
+            Number,
+            True,
+            False,
+            Null,
+            LBrace,
+            LBracket,
         ],
-        actual: Eof,
-        origin: "",
+        actual: Illegal,
+        origin: "this is an unclosed string ]\n",
         row: 1,
-        column: 31,
+        column: 2,
     },
 )

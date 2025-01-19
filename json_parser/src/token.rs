@@ -131,7 +131,7 @@ impl<'a> Lexer<'a> {
         &self.input[start_pos..self.position]
     }
 
-    fn is_legal_unicode(&mut self) -> bool {
+    fn validate_unicode(&mut self) -> bool {
         let start_pos = self.position;
 
         for _ in 0..4 {
@@ -147,45 +147,48 @@ impl<'a> Lexer<'a> {
         u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF)
     }
 
-    fn is_legal_escaped_character(&mut self) -> bool {
-        match self.ch {
-            Some('"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't') => {
-                self.read_char();
-                true
-            }
-            Some('u') => {
-                self.read_char();
-                self.is_legal_unicode()
-            }
-            _ => false,
-        }
-    }
-
     fn read_string(&mut self) -> (&'a str, bool) {
-        self.read_char(); // consume "
+        self.read_char(); // consume opening double-quote
 
         let start_pos = self.position;
-        let mut legal = true;
+        let mut is_legal = true;
+        let mut has_closing_quote = false;
 
         while let Some(ch) = self.ch {
             match ch {
                 '"' => {
-                    self.read_char();
+                    self.read_char(); // consume closing double-quote
+                    has_closing_quote = true;
                     break;
                 }
                 '\\' => {
                     self.read_char();
-                    legal = self.is_legal_escaped_character();
+
+                    match self.ch {
+                        Some('"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't') => {
+                            self.read_char();
+                        }
+                        Some('u') if is_legal => {
+                            self.read_char();
+                            is_legal = self.validate_unicode();
+                        }
+                        _ => is_legal = false,
+                    }
+
                     continue;
                 }
-                '\t' => legal = false,
+                '\t' => is_legal = false,
                 _ => (),
             };
 
             self.read_char();
         }
 
-        (&self.input[start_pos..self.position - 1], legal)
+        if has_closing_quote {
+            (&self.input[start_pos..self.position - 1], is_legal)
+        } else {
+            (&self.input[start_pos..self.position], false)
+        }
     }
 
     pub fn next_token(&mut self) -> Token<'a> {
@@ -295,8 +298,17 @@ mod tests {
     }
 
     #[test]
-    fn tokenize_escaped() {
+    fn tokenize_escaped_1() {
         let json = r#"{"key":"Hello, \"world!\""}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_escaped_2() {
+        let json = r#"{"key":"\""}"#;
 
         let lexer = Lexer::new(json);
 
@@ -340,7 +352,7 @@ mod tests {
     }
 
     #[test]
-    fn tokenize_invalid_unicode() {
+    fn tokenize_invalid_unicode_1() {
         let json = r#"{"key": "\uda00"}"#;
 
         let lexer = Lexer::new(json);
@@ -360,6 +372,51 @@ mod tests {
     #[test]
     fn tokenize_invalid_unicode_length_2() {
         let json = r#"{"key": "\u1"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_unicode_length_3() {
+        let json = r#"{"key": "\uabc\u1234"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_unicode_length_4() {
+        let json = r#"{"key": "\u1234\uabc"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_escape_1() {
+        let json = r#"{"key": "\"}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_escape_2() {
+        let json = r#"{"key": "\"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn tokenize_invalid_escape_3() {
+        let json = r#"{"key": "\}"#;
 
         let lexer = Lexer::new(json);
 
