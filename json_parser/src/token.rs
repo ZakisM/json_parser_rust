@@ -404,6 +404,15 @@ mod tests {
     }
 
     #[test]
+    fn tokenize_invalid_unicode_length_5() {
+        let json = r#"{"key": "\ux\""}"#;
+
+        let lexer = Lexer::new(json);
+
+        insta::assert_debug_snapshot!(&lexer.collect::<Vec<_>>());
+    }
+
+    #[test]
     fn tokenize_invalid_escape_1() {
         let json = r#"{"key": "\"}"#;
 
