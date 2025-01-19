@@ -143,7 +143,7 @@ impl<'a> Lexer<'a> {
         let start_pos = self.position;
 
         for _ in 0..4 {
-            if !matches!(self.ch, Some('0'..='9' | 'a'..='f' | 'A'..='F')) {
+            if !matches!(self.ch, Some(c) if c.is_ascii_hexdigit()) {
                 break;
             }
 
@@ -175,22 +175,20 @@ impl<'a> Lexer<'a> {
 
     fn read_string(&mut self) -> (&'a str, bool) {
         let start_pos = self.position;
-
         let mut legal = true;
 
-        loop {
-            match self.ch {
-                Some('"') => {
+        while let Some(ch) = self.ch {
+            match ch {
+                '"' => {
                     self.read_char();
                     break;
                 }
-                Some('\\') => {
+                '\\' => {
                     self.read_char();
                     legal = self.is_legal_escaped_character();
                     continue;
                 }
-                Some('\t') => legal = false,
-                None => break,
+                '\t' => legal = false,
                 _ => (),
             };
 
@@ -214,13 +212,15 @@ impl<'a> Lexer<'a> {
                 self.read_char();
 
                 let (str, legal) = self.read_string();
-                let kind = if legal {
-                    TokenKind::String
-                } else {
-                    TokenKind::Illegal
-                };
 
-                return Token { kind, origin: str };
+                return Token {
+                    kind: if legal {
+                        TokenKind::String
+                    } else {
+                        TokenKind::Illegal
+                    },
+                    origin: str,
+                };
             }
             Some('t' | 'f' | 'n') => {
                 let ident = self.read_ident();
