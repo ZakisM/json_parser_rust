@@ -12,9 +12,9 @@ fn main() {
     };
 
     let input = fs::read_to_string(path).unwrap();
-    // let mut file = file.as_bytes().to_vec();
+    // let mut input = input.as_bytes().to_vec();
 
-    // let root = simd_json::to_borrowed_value(&mut file);
+    // let root = simd_json::to_borrowed_value(&mut input);
     // dbg!(&root);
 
     let bump = Bump::new();

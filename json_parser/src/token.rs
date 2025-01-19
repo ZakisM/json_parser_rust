@@ -114,11 +114,7 @@ impl<'a> Lexer<'a> {
     fn read_ident(&mut self) -> &'a str {
         let start_pos = self.position;
 
-        while let Some(c) = self.ch {
-            if !c.is_ascii_lowercase() {
-                break;
-            }
-
+        while matches!(self.ch, Some(c) if c.is_ascii_lowercase()) {
             self.read_char();
         }
 
@@ -128,12 +124,8 @@ impl<'a> Lexer<'a> {
     fn read_number(&mut self) -> &'a str {
         let start_pos = self.position;
 
-        loop {
+        while matches!(self.ch, Some('0'..='9' | '.' | '-' | '+' | 'e' | 'E')) {
             self.read_char();
-
-            if !matches!(self.ch, Some('0'..='9' | '.' | '-' | '+' | 'e' | 'E')) {
-                break;
-            }
         }
 
         &self.input[start_pos..self.position]
@@ -144,17 +136,13 @@ impl<'a> Lexer<'a> {
 
         for _ in 0..4 {
             if !matches!(self.ch, Some(c) if c.is_ascii_hexdigit()) {
-                break;
+                return false;
             }
 
             self.read_char();
         }
 
         let codepoint = &self.input[start_pos..self.position];
-
-        if codepoint.len() != 4 {
-            return false;
-        }
 
         u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF)
     }
@@ -174,6 +162,8 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_string(&mut self) -> (&'a str, bool) {
+        self.read_char(); // consume "
+
         let start_pos = self.position;
         let mut legal = true;
 
@@ -209,8 +199,6 @@ impl<'a> Lexer<'a> {
             Some(':') => TokenKind::Colon,
             Some(',') => TokenKind::Comma,
             Some('"') => {
-                self.read_char();
-
                 let (str, legal) = self.read_string();
 
                 return Token {
