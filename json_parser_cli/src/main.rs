@@ -19,5 +19,8 @@ fn main() {
 
     let bump = Bump::new();
     let parser = Parser::new(&input);
-    parser.parse(&bump);
+
+    if let Err(e) = parser.parse(&bump) {
+        eprintln!("{e}");
+    };
 }

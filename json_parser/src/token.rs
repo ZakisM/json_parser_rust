@@ -131,7 +131,7 @@ impl<'a> Lexer<'a> {
         &self.input[start_pos..self.position]
     }
 
-    fn validate_unicode(&mut self) -> bool {
+    fn is_legal_unicode(&mut self) -> bool {
         let start_pos = self.position;
 
         for _ in 0..4 {
@@ -164,15 +164,22 @@ impl<'a> Lexer<'a> {
                 '\\' => {
                     self.read_char();
 
-                    match self.ch {
-                        Some('"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't') => {
+                    if matches!(
+                        self.ch,
+                        Some('"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't')
+                    ) {
+                        // If character is properly escaped then consume it
+                        self.read_char();
+                    } else if is_legal {
+                        // If current string is legal then do extra check
+                        // to see if valid unicode otherwise must be an invalid
+                        // escape character i.e \x \abc
+                        if matches!(self.ch, Some('u')) {
                             self.read_char();
+                            is_legal = self.is_legal_unicode();
+                        } else {
+                            is_legal = false;
                         }
-                        Some('u') if is_legal => {
-                            self.read_char();
-                            is_legal = self.validate_unicode();
-                        }
-                        _ => is_legal = false,
                     }
 
                     continue;
