@@ -19,9 +19,5 @@ fn main() {
 
     let bump = Bump::new();
     let parser = Parser::new(&input);
-
-    match parser.parse(&bump) {
-        Ok(res) => println!("{res:#?}"),
-        Err(e) => eprintln!("{e}"),
-    };
+    parser.parse(&bump);
 }

@@ -1,4 +1,4 @@
-use std::{iter::Peekable, str::Chars};
+use std::str::Chars;
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
@@ -56,12 +56,12 @@ pub struct Lexer<'a> {
     pub row: usize,
     pub column: usize,
     ch: Option<char>,
-    chars: Peekable<Chars<'a>>, // current char under examination
+    chars: Chars<'a>, // current char under examination
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
-        let chars = input.chars().peekable();
+        let chars = input.chars();
 
         let mut lexer = Self {
             input,
