@@ -147,6 +147,7 @@ impl<'a> Lexer<'a> {
         u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF)
     }
 
+    // TODO: Return error! Rather than continuing
     fn read_string(&mut self) -> (&'a str, bool) {
         self.read_char(); // consume opening double-quote
 
