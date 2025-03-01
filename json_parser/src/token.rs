@@ -184,7 +184,7 @@ impl<'a> Lexer<'a> {
 
                     continue;
                 }
-                '\t' => is_legal = false,
+                '\t' | '\n' => is_legal = false,
                 _ => (),
             };
 
