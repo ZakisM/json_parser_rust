@@ -147,7 +147,6 @@ impl<'a> Lexer<'a> {
         u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF)
     }
 
-    // TODO: Return error! Rather than continuing
     fn read_string(&mut self) -> (&'a str, bool) {
         self.read_char(); // consume opening double-quote
 
@@ -193,7 +192,11 @@ impl<'a> Lexer<'a> {
         }
 
         if has_closing_quote {
-            (&self.input[start_pos..self.position - 1], is_legal)
+            if is_legal {
+                (&self.input[start_pos..self.position - 1], is_legal)
+            } else {
+                (&self.input[start_pos..self.position], is_legal)
+            }
         } else {
             (&self.input[start_pos..self.position], false)
         }
@@ -360,7 +363,7 @@ mod tests {
     }
 
     #[test]
-    fn tokenize_invalid_unicode_1() {
+    fn tokenize_valid_unicode_4() {
         let json = r#"{"key": "\uda00"}"#;
 
         let lexer = Lexer::new(json);

@@ -2,7 +2,6 @@
 source: json_parser/src/parser.rs
 expression: parser.parse(&bump)
 input_file: test_data/fail/fail28.json
-snapshot_kind: text
 ---
 Err(
     ExpectedTokenError {
@@ -16,8 +15,8 @@ Err(
             LBracket,
         ],
         actual: Illegal,
-        origin: "line\\\nbreak",
+        origin: "line\\\nbreak\"",
         row: 1,
-        column: 4,
+        column: 3,
     },
 )
