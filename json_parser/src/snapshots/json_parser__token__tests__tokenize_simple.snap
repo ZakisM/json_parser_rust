@@ -1,7 +1,6 @@
 ---
 source: json_parser/src/token.rs
 expression: "&lexer.collect::<Vec<_>>()"
-snapshot_kind: text
 ---
 [
     Token {

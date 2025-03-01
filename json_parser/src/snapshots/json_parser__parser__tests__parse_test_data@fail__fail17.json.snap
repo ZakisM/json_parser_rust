@@ -2,7 +2,6 @@
 source: json_parser/src/parser.rs
 expression: parser.parse(&bump)
 input_file: test_data/fail/fail17.json
-snapshot_kind: text
 ---
 Err(
     ExpectedTokenError {
@@ -16,8 +15,8 @@ Err(
             LBracket,
         ],
         actual: Illegal,
-        origin: "Illegal backslash escape: \\017",
+        origin: "Illegal backslash escape: \\017\"",
         row: 1,
-        column: 4,
+        column: 3,
     },
 )

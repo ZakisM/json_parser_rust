@@ -1,7 +1,6 @@
 ---
 source: json_parser/src/token.rs
 expression: "&lexer.collect::<Vec<_>>()"
-snapshot_kind: text
 ---
 [
     Token {
@@ -18,7 +17,7 @@ snapshot_kind: text
     },
     Token {
         kind: Illegal,
-        origin: "\\u1234\\uabc",
+        origin: "\\u1234\\uabc\"",
     },
     Token {
         kind: RBrace,

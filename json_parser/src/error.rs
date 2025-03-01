@@ -17,6 +17,7 @@ impl ExpectedTokenError {
         row: usize,
         column: usize,
     ) -> Self {
+        dbg!(&column);
         let column = column - origin.chars().count();
 
         Self {

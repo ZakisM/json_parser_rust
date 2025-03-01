@@ -2,7 +2,6 @@
 source: json_parser/src/parser.rs
 expression: parser.parse(&bump)
 input_file: test_data/fail/fail36.json
-snapshot_kind: text
 ---
 Err(
     ExpectedTokenError {
