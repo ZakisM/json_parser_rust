@@ -175,7 +175,7 @@ impl<'a> Parser<'a> {
         Ok(JsonValue::Object(items))
     }
 
-    fn parse_root_object(mut self, bump: &'a Bump) -> Result<JsonValue<'a>, ExpectedTokenError> {
+    fn parse_root_object(&mut self, bump: &'a Bump) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let result = self.parse_object(bump)?;
 
         self.next_token();
@@ -195,7 +195,7 @@ impl<'a> Parser<'a> {
         Ok(result)
     }
 
-    fn parse_root_array(mut self, bump: &'a Bump) -> Result<JsonValue<'a>, ExpectedTokenError> {
+    fn parse_root_array(&mut self, bump: &'a Bump) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let result = self.parse_array(bump)?;
 
         self.next_token();
@@ -215,10 +215,21 @@ impl<'a> Parser<'a> {
         Ok(result)
     }
 
-    pub fn parse(self, bump: &'a Bump) -> Result<JsonValue<'a>, ExpectedTokenError> {
+    pub fn parse(mut self, bump: &'a Bump) -> Result<JsonValue<'a>, ExpectedTokenError> {
         match self.peek_token.kind {
             TokenKind::LBrace => self.parse_root_object(bump),
             TokenKind::LBracket => self.parse_root_array(bump),
+            TokenKind::String
+            | TokenKind::Number
+            | TokenKind::True
+            | TokenKind::False
+            | TokenKind::Null => {
+                let result = self.parse_value(bump)?;
+
+                self.expect_peek(TokenKind::Eof)?;
+
+                Ok(result)
+            }
             _ => expected_token_err!(
                 self.current_token,
                 self.lexer.row,

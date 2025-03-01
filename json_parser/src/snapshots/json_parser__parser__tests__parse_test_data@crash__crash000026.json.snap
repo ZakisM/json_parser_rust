@@ -6,12 +6,11 @@ input_file: test_data/crash/crash000026.json
 Err(
     ExpectedTokenError {
         expected: [
-            LBrace,
-            LBracket,
+            Eof,
         ],
         actual: Illegal,
-        origin: "",
+        origin: "\u{7f}",
         row: 1,
-        column: 1011,
+        column: 1012,
     },
 )

@@ -245,7 +245,7 @@ impl<'a> Lexer<'a> {
 
                 return Token { kind, origin: num };
             }
-            _ if self.position == self.input.len() => {
+            _ if self.position >= self.input.len() => {
                 self.read_char();
 
                 return Token {

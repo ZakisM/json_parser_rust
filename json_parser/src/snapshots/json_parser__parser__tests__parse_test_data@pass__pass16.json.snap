@@ -1,10 +1,10 @@
 ---
 source: json_parser/src/parser.rs
 expression: parser.parse(&bump)
-input_file: test_data/fail/fail69.json
+input_file: test_data/pass/pass16.json
 ---
 Ok(
     Number(
-        3.3333333333333333e24,
+        0.0,
     ),
 )

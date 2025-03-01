@@ -1,16 +1,22 @@
 ---
 source: json_parser/src/parser.rs
 expression: parser.parse(&bump)
-input_file: test_data/crash/crash000029.json
+input_file: test_data/crash/crash000037.json
 ---
 Err(
     ExpectedTokenError {
         expected: [
+            String,
             Number,
+            True,
+            False,
+            Null,
+            LBrace,
+            LBracket,
         ],
         actual: Illegal,
-        origin: "184467440737095516.184467440737095516184467440737095516.184467440737095516.6.6",
+        origin: "-",
         row: 1,
-        column: 78,
+        column: 2,
     },
 )
