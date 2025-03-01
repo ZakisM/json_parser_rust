@@ -10,6 +10,6 @@ Err(
         actual: Illegal,
         origin: "4eee",
         row: 3,
-        column: 16,
+        column: 20,
     },
 )

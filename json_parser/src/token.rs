@@ -192,11 +192,7 @@ impl<'a> Lexer<'a> {
         }
 
         if has_closing_quote {
-            if is_legal {
-                (&self.input[start_pos..self.position - 1], is_legal)
-            } else {
-                (&self.input[start_pos..self.position], is_legal)
-            }
+            (&self.input[start_pos..self.position - 1], is_legal)
         } else {
             (&self.input[start_pos..self.position], false)
         }

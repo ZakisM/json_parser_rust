@@ -17,6 +17,6 @@ Err(
         actual: Illegal,
         origin: "a",
         row: 1,
-        column: 24,
+        column: 25,
     },
 )

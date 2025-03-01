@@ -11,6 +11,6 @@ Err(
         actual: String,
         origin: "misplaced quoted value",
         row: 1,
-        column: 36,
+        column: 58,
     },
 )

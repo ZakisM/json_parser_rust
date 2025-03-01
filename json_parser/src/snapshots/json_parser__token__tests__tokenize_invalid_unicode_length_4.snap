@@ -17,7 +17,7 @@ expression: "&lexer.collect::<Vec<_>>()"
     },
     Token {
         kind: Illegal,
-        origin: "\\u1234\\uabc\"",
+        origin: "\\u1234\\uabc",
     },
     Token {
         kind: RBrace,

@@ -11,6 +11,6 @@ Err(
         actual: Null,
         origin: "null",
         row: 1,
-        column: 18,
+        column: 22,
     },
 )

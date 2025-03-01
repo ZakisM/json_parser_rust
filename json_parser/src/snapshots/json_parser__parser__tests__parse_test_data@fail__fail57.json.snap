@@ -15,8 +15,8 @@ Err(
             LBracket,
         ],
         actual: Illegal,
-        origin: "\\udc00\\ud800\\uggggxy\"",
+        origin: "\\udc00\\ud800\\uggggxy",
         row: 1,
-        column: 12,
+        column: 33,
     },
 )

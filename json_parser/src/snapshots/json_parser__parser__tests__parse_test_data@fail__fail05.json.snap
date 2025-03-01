@@ -17,6 +17,6 @@ Err(
         actual: Comma,
         origin: ",",
         row: 1,
-        column: 23,
+        column: 24,
     },
 )

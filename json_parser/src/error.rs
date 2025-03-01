@@ -10,16 +10,13 @@ pub struct ExpectedTokenError {
 }
 
 impl ExpectedTokenError {
-    pub fn with_offset(
+    pub fn new(
         expected: Vec<TokenKind>,
         actual: TokenKind,
         origin: String,
         row: usize,
         column: usize,
     ) -> Self {
-        dbg!(&column);
-        let column = column - origin.chars().count();
-
         Self {
             expected,
             actual,

@@ -15,8 +15,8 @@ Err(
             LBracket,
         ],
         actual: Illegal,
-        origin: "\ttab\tcharacter\tin\tstring\t\"",
+        origin: "\ttab\tcharacter\tin\tstring\t",
         row: 1,
-        column: 3,
+        column: 29,
     },
 )

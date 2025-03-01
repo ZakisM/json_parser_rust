@@ -4,7 +4,7 @@ members = ["json_parser", "json_parser_cli"]
 [package]
 name = "json_parser_rust"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # [build]
 # target = "x86_64-pc-windows-msvc"

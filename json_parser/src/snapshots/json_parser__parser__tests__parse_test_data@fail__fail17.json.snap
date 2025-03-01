@@ -15,8 +15,8 @@ Err(
             LBracket,
         ],
         actual: Illegal,
-        origin: "Illegal backslash escape: \\017\"",
+        origin: "Illegal backslash escape: \\017",
         row: 1,
-        column: 3,
+        column: 34,
     },
 )

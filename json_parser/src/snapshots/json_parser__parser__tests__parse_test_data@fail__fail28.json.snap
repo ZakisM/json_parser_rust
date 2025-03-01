@@ -15,8 +15,8 @@ Err(
             LBracket,
         ],
         actual: Illegal,
-        origin: "line\\\nbreak\"",
+        origin: "line\\\nbreak",
         row: 1,
-        column: 3,
+        column: 15,
     },
 )

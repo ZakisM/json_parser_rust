@@ -1,7 +1,7 @@
 ---
 source: json_parser/src/parser.rs
 expression: parser.parse(&bump)
-input_file: test_data/fail/fail56.json
+input_file: test_data/fail/fail68.json
 ---
 Err(
     ExpectedTokenError {
@@ -14,9 +14,9 @@ Err(
             LBrace,
             LBracket,
         ],
-        actual: RBracket,
-        origin: "]",
+        actual: Illegal,
+        origin: "t",
         row: 1,
-        column: 6,
+        column: 11,
     },
 )

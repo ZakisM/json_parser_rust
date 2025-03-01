@@ -8,7 +8,7 @@ use crate::{
 
 macro_rules! expected_token_err {
     ($actual_token:expr, $row:expr, $column:expr, $expected_token:path) => {
-        return Err(ExpectedTokenError::with_offset(
+        return Err(ExpectedTokenError::new(
             vec![$expected_token],
             $actual_token.kind,
             ($actual_token.origin).to_owned(),
@@ -17,7 +17,7 @@ macro_rules! expected_token_err {
         ))
     };
     ($actual_token:expr, $row:expr, $column:expr, $( $variant:ident )|+) => {
-        return Err(ExpectedTokenError::with_offset(
+        return Err(ExpectedTokenError::new(
             vec![$(TokenKind::$variant),+],
             $actual_token.kind,
             ($actual_token.origin).to_owned(),
@@ -68,7 +68,7 @@ impl<'a> Parser<'a> {
 
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
         let n = literal.parse::<f64>().map_err(|_| {
-            ExpectedTokenError::with_offset(
+            ExpectedTokenError::new(
                 vec![TokenKind::Number],
                 TokenKind::Illegal,
                 literal.to_owned(),

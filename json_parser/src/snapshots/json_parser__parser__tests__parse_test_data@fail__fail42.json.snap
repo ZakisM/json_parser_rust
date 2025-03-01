@@ -11,6 +11,6 @@ Err(
         actual: Illegal,
         origin: "\u{19}",
         row: 1,
-        column: 2,
+        column: 3,
     },
 )

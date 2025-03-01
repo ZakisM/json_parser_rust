@@ -17,6 +17,6 @@ Err(
         actual: Illegal,
         origin: "this is an unclosed string ]\n",
         row: 1,
-        column: 2,
+        column: 31,
     },
 )
