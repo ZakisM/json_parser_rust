@@ -10,7 +10,7 @@ Err(
         ],
         actual: Illegal,
         origin: "28033333333333333333333333333333333348253421170679.6170-",
-        row: 1,
-        column: 60,
+        invalid_row: 1,
+        invalid_col: 4,
     },
 )

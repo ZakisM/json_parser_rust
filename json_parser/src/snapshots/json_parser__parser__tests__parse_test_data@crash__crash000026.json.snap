@@ -10,7 +10,7 @@ Err(
         ],
         actual: Illegal,
         origin: "\u{7f}",
-        row: 1,
-        column: 1012,
+        invalid_row: 1,
+        invalid_col: 1011,
     },
 )

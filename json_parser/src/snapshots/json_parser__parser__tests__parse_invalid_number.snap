@@ -9,7 +9,7 @@ Err(
         ],
         actual: Illegal,
         origin: "4eee",
-        row: 3,
-        column: 20,
+        invalid_row: 3,
+        invalid_col: 16,
     },
 )

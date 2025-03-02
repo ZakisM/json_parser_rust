@@ -16,7 +16,7 @@ Err(
         ],
         actual: Comma,
         origin: ",",
-        row: 1,
-        column: 24,
+        invalid_row: 1,
+        invalid_col: 23,
     },
 )

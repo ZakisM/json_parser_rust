@@ -16,7 +16,7 @@ Err(
         ],
         actual: Colon,
         origin: ":",
-        row: 1,
-        column: 18,
+        invalid_row: 1,
+        invalid_col: 17,
     },
 )

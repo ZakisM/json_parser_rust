@@ -10,7 +10,7 @@ Err(
         ],
         actual: Eof,
         origin: "",
-        row: 1,
-        column: 40,
+        invalid_row: 1,
+        invalid_col: 41,
     },
 )

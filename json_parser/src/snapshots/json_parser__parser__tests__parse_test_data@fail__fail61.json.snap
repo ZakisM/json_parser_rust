@@ -16,7 +16,7 @@ Err(
         ],
         actual: Illegal,
         origin: "\\uxhgj",
-        row: 1,
-        column: 22,
+        invalid_row: 1,
+        invalid_col: 14,
     },
 )

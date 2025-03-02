@@ -4,6 +4,7 @@ use std::str::Chars;
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub origin: &'a str,
+    pub start_column: usize,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
@@ -201,6 +202,8 @@ impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> Token<'a> {
         self.skip_whitespace();
 
+        let start_column = self.column;
+
         let kind = match self.ch {
             Some('{') => TokenKind::LBrace,
             Some('}') => TokenKind::RBrace,
@@ -218,6 +221,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::Illegal
                     },
                     origin: str,
+                    start_column,
                 };
             }
             Some('t' | 'f' | 'n') => {
@@ -233,6 +237,7 @@ impl<'a> Lexer<'a> {
                 return Token {
                     kind,
                     origin: ident,
+                    start_column,
                 };
             }
             Some('-' | '0'..='9') => {
@@ -248,13 +253,18 @@ impl<'a> Lexer<'a> {
                     _ => TokenKind::Number,
                 };
 
-                return Token { kind, origin: num };
+                return Token {
+                    kind,
+                    origin: num,
+                    start_column,
+                };
             }
             _ if self.position >= self.input.len() => {
                 self.read_char();
 
                 return Token {
                     kind: TokenKind::Eof,
+                    start_column: start_column + 1,
                     ..Default::default()
                 };
             }
@@ -265,7 +275,11 @@ impl<'a> Lexer<'a> {
 
         self.read_char();
 
-        Token { kind, origin }
+        Token {
+            kind,
+            origin,
+            start_column,
+        }
     }
 }
 

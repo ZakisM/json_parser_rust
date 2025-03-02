@@ -16,7 +16,7 @@ Err(
         ],
         actual: Illegal,
         origin: "tab\\   character\\   in\\  string\\  ",
-        row: 1,
-        column: 38,
+        invalid_row: 1,
+        invalid_col: 2,
     },
 )

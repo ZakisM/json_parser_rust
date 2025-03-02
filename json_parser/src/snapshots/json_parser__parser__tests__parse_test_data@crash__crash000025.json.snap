@@ -11,7 +11,7 @@ Err(
         ],
         actual: Illegal,
         origin: "\u{e}",
-        row: 1,
-        column: 83,
+        invalid_row: 1,
+        invalid_col: 82,
     },
 )

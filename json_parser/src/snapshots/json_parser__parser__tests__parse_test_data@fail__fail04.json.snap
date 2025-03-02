@@ -16,7 +16,7 @@ Err(
         ],
         actual: RBracket,
         origin: "]",
-        row: 1,
-        column: 16,
+        invalid_row: 1,
+        invalid_col: 16,
     },
 )

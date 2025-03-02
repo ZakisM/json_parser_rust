@@ -54,7 +54,12 @@ impl<'a> Parser<'a> {
 
     fn expect_peek(&mut self, expected: TokenKind) -> Result<(), ExpectedTokenError> {
         if self.peek_token.kind != expected {
-            expected_token_err!(self.peek_token, self.lexer.row, self.lexer.column, expected)
+            expected_token_err!(
+                self.peek_token,
+                self.lexer.row,
+                self.peek_token.start_column,
+                expected
+            )
         }
 
         self.next_token();
@@ -73,7 +78,7 @@ impl<'a> Parser<'a> {
                 TokenKind::Illegal,
                 literal.to_owned(),
                 self.lexer.row,
-                self.lexer.column,
+                self.peek_token.start_column,
             )
         })?;
 
@@ -93,7 +98,7 @@ impl<'a> Parser<'a> {
                 expected_token_err!(
                     self.peek_token,
                     self.lexer.row,
-                    self.lexer.column,
+                    self.peek_token.start_column,
                     String | Number | True | False | Null | LBrace | LBracket
                 )
             }
@@ -135,7 +140,7 @@ impl<'a> Parser<'a> {
                     expected_token_err!(
                         self.peek_token,
                         self.lexer.row,
-                        self.lexer.column,
+                        self.peek_token.start_column,
                         Comma | RBracket
                     )
                 }
@@ -165,7 +170,7 @@ impl<'a> Parser<'a> {
                     expected_token_err!(
                         self.peek_token,
                         self.lexer.row,
-                        self.lexer.column,
+                        self.peek_token.start_column,
                         Comma | RBrace
                     )
                 }
@@ -187,7 +192,7 @@ impl<'a> Parser<'a> {
             expected_token_err!(
                 self.peek_token,
                 self.lexer.row,
-                self.lexer.column,
+                self.peek_token.start_column,
                 TokenKind::Eof
             )
         }
@@ -207,7 +212,7 @@ impl<'a> Parser<'a> {
             expected_token_err!(
                 self.peek_token,
                 self.lexer.row,
-                self.lexer.column,
+                self.peek_token.start_column,
                 TokenKind::Eof
             )
         }
@@ -233,7 +238,7 @@ impl<'a> Parser<'a> {
             _ => expected_token_err!(
                 self.current_token,
                 self.lexer.row,
-                self.lexer.column,
+                self.peek_token.start_column,
                 LBrace | LBracket
             ),
         }

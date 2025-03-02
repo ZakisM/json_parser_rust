@@ -16,7 +16,7 @@ Err(
         ],
         actual: Illegal,
         origin: "\\uc0meatmebro",
-        row: 1,
-        column: 26,
+        invalid_row: 1,
+        invalid_col: 11,
     },
 )

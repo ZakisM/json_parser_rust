@@ -16,7 +16,7 @@ Err(
         ],
         actual: Illegal,
         origin: "line\\\nbreak",
-        row: 1,
-        column: 15,
+        invalid_row: 1,
+        invalid_col: 2,
     },
 )

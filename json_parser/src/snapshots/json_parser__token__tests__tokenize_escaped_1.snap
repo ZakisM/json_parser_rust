@@ -6,25 +6,31 @@ expression: "&lexer.collect::<Vec<_>>()"
     Token {
         kind: LBrace,
         origin: "{",
+        start_column: 1,
     },
     Token {
         kind: String,
         origin: "key",
+        start_column: 2,
     },
     Token {
         kind: Colon,
         origin: ":",
+        start_column: 7,
     },
     Token {
         kind: String,
         origin: "Hello, \\\"world!\\\"",
+        start_column: 8,
     },
     Token {
         kind: RBrace,
         origin: "}",
+        start_column: 27,
     },
     Token {
         kind: Eof,
         origin: "",
+        start_column: 28,
     },
 ]
