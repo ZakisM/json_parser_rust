@@ -41,7 +41,7 @@ impl std::fmt::Display for TokenKind {
             TokenKind::RBracket => "]",
             TokenKind::Colon => ":",
             TokenKind::Comma => ",",
-            TokenKind::Illegal => "Not allowed",
+            TokenKind::Illegal => "Illegal",
             TokenKind::Eof => "End of file",
         };
 

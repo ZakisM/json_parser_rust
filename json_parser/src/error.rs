@@ -32,14 +32,18 @@ impl std::fmt::Display for ExpectedTokenError {
         let expected = self
             .expected
             .iter()
-            .map(|kind| format!("'{kind}'"))
+            .map(|kind| format!("'{}'", kind.to_string().to_uppercase()))
             .collect::<Vec<_>>()
-            .join(" OR ");
+            .join(", ");
 
         write!(
             f,
-            "expected token at row {} column {} to be {} but got '{}' instead which is '{}'",
-            self.invalid_row, self.invalid_col, expected, self.origin, self.actual
+            "expected token at row {} column {} to be one of: [{}] but got '{}' instead which is '{}'",
+            self.invalid_row,
+            self.invalid_col,
+            expected,
+            self.origin,
+            self.actual.to_string().to_uppercase()
         )
     }
 }

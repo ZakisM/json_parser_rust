@@ -10,7 +10,7 @@ Err(
             LBracket,
         ],
         actual: Illegal,
-        origin: "",
+        origin: "falsy",
         invalid_row: 1,
         invalid_col: 1,
     },

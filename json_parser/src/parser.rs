@@ -1,4 +1,4 @@
-use bumpalo::{collections::Vec, Bump};
+use bumpalo::{Bump, collections::Vec};
 
 use crate::{
     ast::{JsonProperty, JsonValue},
@@ -236,10 +236,10 @@ impl<'a> Parser<'a> {
                 Ok(result)
             }
             _ => expected_token_err!(
-                self.current_token,
+                self.peek_token,
                 self.lexer.row,
                 self.peek_token.start_column,
-                LBrace | LBracket
+                String | Number | True | False | Null | LBrace | LBracket
             ),
         }
     }
