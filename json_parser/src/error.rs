@@ -39,11 +39,7 @@ impl std::fmt::Display for ExpectedTokenError {
         write!(
             f,
             "expected token at row {} column {} to be one of: [{}] but got '{}' instead which is '{}'",
-            self.invalid_row,
-            self.invalid_col,
-            expected,
-            self.origin,
-            self.actual.to_string().to_uppercase()
+            self.invalid_row, self.invalid_col, expected, self.origin, self.actual
         )
     }
 }

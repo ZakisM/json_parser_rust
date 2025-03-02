@@ -8,7 +8,9 @@ Err(
         expected: [
             Eof,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            None,
+        ),
         origin: "\u{7f}",
         invalid_row: 1,
         invalid_col: 1011,

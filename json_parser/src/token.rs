@@ -1,13 +1,19 @@
-use std::str::Chars;
+use std::{num::ParseFloatError, str::Chars};
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+macro_rules! illegal_number {
+    ($variant:ident) => {
+        TokenKind::Illegal(Some(IllegalReason::Number(IllegalNumber::$variant)))
+    };
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub origin: &'a str,
     pub start_column: usize,
 }
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     // Values
     String,
@@ -22,27 +28,102 @@ pub enum TokenKind {
     RBracket,
     Colon,
     Comma,
-    #[default]
-    Illegal,
+    Illegal(Option<IllegalReason>),
     Eof,
+}
+
+impl Default for TokenKind {
+    fn default() -> Self {
+        Self::Illegal(None)
+    }
 }
 
 impl std::fmt::Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value = match self {
-            TokenKind::String => "string",
-            TokenKind::Number => "number",
-            TokenKind::True => "true",
-            TokenKind::False => "false",
-            TokenKind::Null => "null",
+            TokenKind::String => "STRING",
+            TokenKind::Number => "NUMBER",
+            TokenKind::True => "TRUE",
+            TokenKind::False => "FALSE",
+            TokenKind::Null => "NULL",
             TokenKind::LBrace => "{",
             TokenKind::RBrace => "}",
             TokenKind::LBracket => "[",
             TokenKind::RBracket => "]",
             TokenKind::Colon => ":",
             TokenKind::Comma => ",",
-            TokenKind::Illegal => "Illegal",
+            TokenKind::Illegal(reason) => match reason {
+                Some(reason) => &format!("ILLEGAL ({reason})"),
+                None => "ILLEGAL",
+            },
             TokenKind::Eof => "End of file",
+        };
+
+        write!(f, "{value}")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IllegalReason {
+    Character(char),
+    Number(IllegalNumber),
+    String(IllegalString),
+}
+
+impl std::fmt::Display for IllegalReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            IllegalReason::Character(c) => &format!("invalid character: '{c}'"),
+            IllegalReason::Number(e) => &format!("invalid number: {e}"),
+            IllegalReason::String(e) => &format!("invalid string: {e}"),
+        };
+
+        write!(f, "{value}")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IllegalNumber {
+    ParseFloatError(ParseFloatError),
+    LeadingZero,
+    MissingExponent,
+    MinusMissingDigit,
+    MissingFraction,
+    InvalidFractionPart,
+}
+
+impl std::fmt::Display for IllegalNumber {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            IllegalNumber::ParseFloatError(e) => &e.to_string(),
+            IllegalNumber::LeadingZero => "leading zero",
+            IllegalNumber::MissingExponent => "missing exponent",
+            IllegalNumber::MinusMissingDigit => "minus must be followed by a digit",
+            IllegalNumber::MissingFraction => "missing fraction",
+            IllegalNumber::InvalidFractionPart => "invalid fraction part",
+        };
+
+        write!(f, "{value}")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IllegalString {
+    UnescapedNewLine,
+    UnescapedTab,
+    InvalidUnicode,
+    InvalidEscape,
+    MissingClosingQuote,
+}
+
+impl std::fmt::Display for IllegalString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            IllegalString::UnescapedNewLine => "unescaped newline",
+            IllegalString::UnescapedTab => "unescaped tab",
+            IllegalString::InvalidUnicode => "invalid unicode",
+            IllegalString::InvalidEscape => "invalid escape",
+            IllegalString::MissingClosingQuote => "missing closing quote",
         };
 
         write!(f, "{value}")
@@ -132,12 +213,12 @@ impl<'a> Lexer<'a> {
         &self.input[start_pos..self.position]
     }
 
-    fn is_legal_unicode(&mut self) -> bool {
+    fn is_legal_unicode(&mut self) -> Option<IllegalReason> {
         let start_pos = self.position;
 
         for _ in 0..4 {
             if !matches!(self.ch, Some(c) if c.is_ascii_hexdigit()) {
-                return false;
+                return Some(IllegalReason::String(IllegalString::InvalidUnicode));
             }
 
             self.read_char();
@@ -145,14 +226,18 @@ impl<'a> Lexer<'a> {
 
         let codepoint = &self.input[start_pos..self.position];
 
-        u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF)
+        if u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF) {
+            None
+        } else {
+            Some(IllegalReason::String(IllegalString::InvalidUnicode))
+        }
     }
 
-    fn read_string(&mut self) -> (&'a str, bool) {
+    fn read_string(&mut self) -> (&'a str, Option<IllegalReason>) {
         self.read_char(); // consume opening double-quote
 
         let start_pos = self.position;
-        let mut is_legal = true;
+        let mut illegal_reason = None;
         let mut has_closing_quote = false;
 
         while let Some(ch) = self.ch {
@@ -171,21 +256,27 @@ impl<'a> Lexer<'a> {
                     ) {
                         // If character is properly escaped then consume it
                         self.read_char();
-                    } else if is_legal {
+                    } else if illegal_reason.is_none() {
                         // If current string is legal then do extra check
                         // to see if valid unicode otherwise must be an invalid
                         // escape character i.e \x \abc
                         if matches!(self.ch, Some('u')) {
                             self.read_char();
-                            is_legal = self.is_legal_unicode();
+                            illegal_reason = self.is_legal_unicode();
                         } else {
-                            is_legal = false;
+                            illegal_reason =
+                                Some(IllegalReason::String(IllegalString::InvalidEscape))
                         }
                     }
 
                     continue;
                 }
-                '\t' | '\n' => is_legal = false,
+                '\t' if illegal_reason.is_none() => {
+                    illegal_reason = Some(IllegalReason::String(IllegalString::UnescapedTab));
+                }
+                '\n' if illegal_reason.is_none() => {
+                    illegal_reason = Some(IllegalReason::String(IllegalString::UnescapedNewLine));
+                }
                 _ => (),
             };
 
@@ -193,9 +284,12 @@ impl<'a> Lexer<'a> {
         }
 
         if has_closing_quote {
-            (&self.input[start_pos..self.position - 1], is_legal)
+            (&self.input[start_pos..self.position - 1], illegal_reason)
         } else {
-            (&self.input[start_pos..self.position], false)
+            (
+                &self.input[start_pos..self.position],
+                Some(IllegalReason::String(IllegalString::MissingClosingQuote)),
+            )
         }
     }
 
@@ -212,14 +306,14 @@ impl<'a> Lexer<'a> {
             Some(':') => TokenKind::Colon,
             Some(',') => TokenKind::Comma,
             Some('"') => {
-                let (str, legal) = self.read_string();
+                let (str, illegal_reason) = self.read_string();
+                let kind = match illegal_reason {
+                    Some(reason) => TokenKind::Illegal(Some(reason)),
+                    None => TokenKind::String,
+                };
 
                 return Token {
-                    kind: if legal {
-                        TokenKind::String
-                    } else {
-                        TokenKind::Illegal
-                    },
+                    kind,
                     origin: str,
                     start_column,
                 };
@@ -231,7 +325,7 @@ impl<'a> Lexer<'a> {
                     "true" => TokenKind::True,
                     "false" => TokenKind::False,
                     "null" => TokenKind::Null,
-                    _ => TokenKind::Illegal,
+                    _ => TokenKind::Illegal(None),
                 };
 
                 return Token {
@@ -244,11 +338,14 @@ impl<'a> Lexer<'a> {
                 let num = self.read_number();
 
                 let kind = match num.as_bytes() {
-                    b"-" | [b'-', b'.', ..] | [b'0', b'0'..=b'9', ..] | [.., b'.'] => {
-                        TokenKind::Illegal
-                    }
+                    [b'0', b'0'..=b'9', ..] => illegal_number!(LeadingZero),
+                    [b'0', b'e' | b'E', ..] => illegal_number!(MissingExponent),
+                    [b'-', b'.', ..] => illegal_number!(InvalidFractionPart),
+                    [.., b'.'] => illegal_number!(MissingFraction),
+                    [.., b'-'] => illegal_number!(MinusMissingDigit),
+                    [.., b'+'] => illegal_number!(MissingExponent),
                     bytes if bytes.windows(2).any(|w| w == b".e" || w == b".E") => {
-                        TokenKind::Illegal
+                        illegal_number!(MissingFraction)
                     }
                     _ => TokenKind::Number,
                 };
@@ -268,7 +365,7 @@ impl<'a> Lexer<'a> {
                     ..Default::default()
                 };
             }
-            _ => TokenKind::Illegal,
+            _ => TokenKind::Illegal(None),
         };
 
         let origin = &self.input[self.position..self.read_position];

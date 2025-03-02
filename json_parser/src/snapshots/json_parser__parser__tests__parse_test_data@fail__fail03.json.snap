@@ -8,7 +8,9 @@ Err(
         expected: [
             String,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            None,
+        ),
         origin: "u",
         invalid_row: 1,
         invalid_col: 2,

@@ -8,11 +8,11 @@ Err(
         expected: [
             String,
             Number,
-            True,
-            False,
             Null,
             LBrace,
             LBracket,
+            True,
+            False,
         ],
         actual: Comma,
         origin: ",",

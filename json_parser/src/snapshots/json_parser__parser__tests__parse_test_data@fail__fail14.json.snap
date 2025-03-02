@@ -9,7 +9,9 @@ Err(
             Comma,
             RBrace,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            None,
+        ),
         origin: "x",
         invalid_row: 1,
         invalid_col: 28,

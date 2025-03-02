@@ -3,14 +3,14 @@ use bumpalo::{Bump, collections::Vec};
 use crate::{
     ast::{JsonProperty, JsonValue},
     error::ExpectedTokenError,
-    token::{Lexer, Token, TokenKind},
+    token::{IllegalNumber, IllegalReason, Lexer, Token, TokenKind},
 };
 
 macro_rules! expected_token_err {
     ($actual_token:expr, $row:expr, $column:expr, $expected_token:path) => {
         return Err(ExpectedTokenError::new(
             vec![$expected_token],
-            $actual_token.kind,
+            $actual_token.kind.clone(),
             ($actual_token.origin).to_owned(),
             $row,
             $column,
@@ -19,7 +19,7 @@ macro_rules! expected_token_err {
     ($actual_token:expr, $row:expr, $column:expr, $( $variant:ident )|+) => {
         return Err(ExpectedTokenError::new(
             vec![$(TokenKind::$variant),+],
-            $actual_token.kind,
+            $actual_token.kind.clone(),
             ($actual_token.origin).to_owned(),
             $row,
             $column,
@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
     }
 
     fn next_token(&mut self) {
-        self.current_token = self.peek_token;
+        self.current_token = self.peek_token.clone();
         self.peek_token = self.lexer.next_token();
     }
 
@@ -72,10 +72,12 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        let n = literal.parse::<f64>().map_err(|_| {
+        let n = literal.parse::<f64>().map_err(|e| {
             ExpectedTokenError::new(
                 vec![TokenKind::Number],
-                TokenKind::Illegal,
+                TokenKind::Illegal(Some(IllegalReason::Number(IllegalNumber::ParseFloatError(
+                    e,
+                )))),
                 literal.to_owned(),
                 self.lexer.row,
                 self.peek_token.start_column,
@@ -99,7 +101,7 @@ impl<'a> Parser<'a> {
                     self.peek_token,
                     self.lexer.row,
                     self.peek_token.start_column,
-                    String | Number | True | False | Null | LBrace | LBracket
+                    String | Number | Null | LBrace | LBracket | True | False
                 )
             }
         };
@@ -239,7 +241,7 @@ impl<'a> Parser<'a> {
                 self.peek_token,
                 self.lexer.row,
                 self.peek_token.start_column,
-                String | Number | True | False | Null | LBrace | LBracket
+                String | Number | Null | LBrace | LBracket | True | False
             ),
         }
     }

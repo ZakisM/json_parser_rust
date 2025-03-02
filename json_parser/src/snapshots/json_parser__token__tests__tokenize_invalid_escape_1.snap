@@ -19,7 +19,13 @@ expression: "&lexer.collect::<Vec<_>>()"
         start_column: 7,
     },
     Token {
-        kind: Illegal,
+        kind: Illegal(
+            Some(
+                String(
+                    MissingClosingQuote,
+                ),
+            ),
+        ),
         origin: "\\\"}",
         start_column: 9,
     },

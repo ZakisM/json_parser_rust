@@ -8,7 +8,17 @@ Err(
         expected: [
             Number,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            Some(
+                Number(
+                    ParseFloatError(
+                        ParseFloatError {
+                            kind: Invalid,
+                        },
+                    ),
+                ),
+            ),
+        ),
         origin: "184467440737095516.184467440737095516184467440737095516.184467440737095516.6.6",
         invalid_row: 1,
         invalid_col: 1,

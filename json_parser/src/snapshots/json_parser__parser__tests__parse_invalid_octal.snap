@@ -7,13 +7,19 @@ Err(
         expected: [
             String,
             Number,
-            True,
-            False,
             Null,
             LBrace,
             LBracket,
+            True,
+            False,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            Some(
+                Number(
+                    LeadingZero,
+                ),
+            ),
+        ),
         origin: "029",
         invalid_row: 2,
         invalid_col: 34,

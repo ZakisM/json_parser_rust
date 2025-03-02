@@ -8,13 +8,15 @@ Err(
         expected: [
             String,
             Number,
-            True,
-            False,
             Null,
             LBrace,
             LBracket,
+            True,
+            False,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            None,
+        ),
         origin: "a",
         invalid_row: 1,
         invalid_col: 24,

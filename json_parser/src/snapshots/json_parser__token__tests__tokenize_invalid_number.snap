@@ -19,7 +19,13 @@ expression: "&lexer.collect::<Vec<_>>()"
         start_column: 10,
     },
     Token {
-        kind: Illegal,
+        kind: Illegal(
+            Some(
+                Number(
+                    MinusMissingDigit,
+                ),
+            ),
+        ),
         origin: "-",
         start_column: 12,
     },

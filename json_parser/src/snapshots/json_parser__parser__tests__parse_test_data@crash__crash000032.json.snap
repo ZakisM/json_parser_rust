@@ -8,13 +8,19 @@ Err(
         expected: [
             String,
             Number,
-            True,
-            False,
             Null,
             LBrace,
             LBracket,
+            True,
+            False,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            Some(
+                Number(
+                    MinusMissingDigit,
+                ),
+            ),
+        ),
         origin: "-",
         invalid_row: 1,
         invalid_col: 41,

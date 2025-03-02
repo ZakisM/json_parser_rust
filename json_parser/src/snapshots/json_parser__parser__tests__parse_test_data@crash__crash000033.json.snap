@@ -6,9 +6,21 @@ input_file: test_data/crash/crash000033.json
 Err(
     ExpectedTokenError {
         expected: [
+            String,
             Number,
+            Null,
+            LBrace,
+            LBracket,
+            True,
+            False,
         ],
-        actual: Illegal,
+        actual: Illegal(
+            Some(
+                Number(
+                    MinusMissingDigit,
+                ),
+            ),
+        ),
         origin: "28033333333333333333333333333333333348253421170679.6170-",
         invalid_row: 1,
         invalid_col: 4,
