@@ -239,7 +239,12 @@ impl<'a> Lexer<'a> {
                 let num = self.read_number();
 
                 let kind = match num.as_bytes() {
-                    b"-" | [b'0', b'0'..=b'9', ..] => TokenKind::Illegal,
+                    b"-" | [b'-', b'.', ..] | [b'0', b'0'..=b'9', ..] | [.., b'.'] => {
+                        TokenKind::Illegal
+                    }
+                    bytes if bytes.windows(2).any(|w| w == b".e" || w == b".E") => {
+                        TokenKind::Illegal
+                    }
                     _ => TokenKind::Number,
                 };
 
