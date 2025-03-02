@@ -8,22 +8,22 @@ use crate::{
 
 macro_rules! expected_token_err {
     ($actual_token:expr, $row:expr, $column:expr, $expected_token:path) => {
-        return Err(ExpectedTokenError::new(
-            vec![$expected_token],
-            $actual_token.kind.clone(),
-            ($actual_token.origin).to_owned(),
-            $row,
-            $column,
-        ))
+        return Err(ExpectedTokenError {
+            expected: vec![$expected_token],
+            actual: $actual_token.kind.clone(),
+            origin: ($actual_token.origin).to_owned(),
+            invalid_row: $row,
+            invalid_col: $column,
+        })
     };
     ($actual_token:expr, $row:expr, $column:expr, $( $variant:ident )|+) => {
-        return Err(ExpectedTokenError::new(
-            vec![$(TokenKind::$variant),+],
-            $actual_token.kind.clone(),
-            ($actual_token.origin).to_owned(),
-            $row,
-            $column,
-        ))
+        return Err(ExpectedTokenError {
+            expected: vec![$(TokenKind::$variant),+],
+            actual: $actual_token.kind.clone(),
+            origin: ($actual_token.origin).to_owned(),
+            invalid_row: $row,
+            invalid_col: $column,
+        })
     };
 }
 
@@ -72,16 +72,14 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        let n = literal.parse::<f64>().map_err(|e| {
-            ExpectedTokenError::new(
-                vec![TokenKind::Number],
-                TokenKind::Illegal(Some(IllegalReason::Number(IllegalNumber::ParseFloatError(
-                    e,
-                )))),
-                literal.to_owned(),
-                self.lexer.row,
-                self.peek_token.start_column,
-            )
+        let n = literal.parse::<f64>().map_err(|e| ExpectedTokenError {
+            expected: vec![TokenKind::Number],
+            actual: TokenKind::Illegal(Some(IllegalReason::Number(
+                IllegalNumber::ParseFloatError(e),
+            ))),
+            origin: literal.to_owned(),
+            invalid_row: self.lexer.row,
+            invalid_col: self.peek_token.start_column,
         })?;
 
         Ok(JsonValue::Number(n))

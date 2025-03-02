@@ -9,24 +9,6 @@ pub struct ExpectedTokenError {
     pub invalid_col: usize,
 }
 
-impl ExpectedTokenError {
-    pub fn new(
-        expected: Vec<TokenKind>,
-        actual: TokenKind,
-        origin: String,
-        invalid_row: usize,
-        invalid_col: usize,
-    ) -> Self {
-        Self {
-            expected,
-            actual,
-            origin,
-            invalid_row,
-            invalid_col,
-        }
-    }
-}
-
 impl std::fmt::Display for ExpectedTokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let expected = self
