@@ -11,7 +11,6 @@ Err(
         actual: Illegal(
             None,
         ),
-        origin: "è",
         invalid_row: 3,
         invalid_col: 17,
     },

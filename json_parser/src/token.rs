@@ -1,19 +1,18 @@
-use std::{num::ParseFloatError, str::Chars};
+use std::str::Chars;
 
-macro_rules! illegal_number {
-    ($variant:ident) => {
-        TokenKind::Illegal(Some(IllegalReason::Number(IllegalNumber::$variant)))
-    };
-}
+use crate::{
+    error::{IllegalReason, IllegalString},
+    illegal_number,
+};
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub origin: &'a str,
     pub start_column: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     // Values
     String,
@@ -63,73 +62,6 @@ impl std::fmt::Display for TokenKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum IllegalReason {
-    Character(char),
-    Number(IllegalNumber),
-    String(IllegalString),
-}
-
-impl std::fmt::Display for IllegalReason {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = match self {
-            IllegalReason::Character(c) => &format!("invalid character: '{c}'"),
-            IllegalReason::Number(e) => &format!("invalid number: {e}"),
-            IllegalReason::String(e) => &format!("invalid string: {e}"),
-        };
-
-        write!(f, "{value}")
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum IllegalNumber {
-    ParseFloatError(ParseFloatError),
-    LeadingZero,
-    MissingExponent,
-    MinusMissingDigit,
-    MissingFraction,
-    InvalidFractionPart,
-}
-
-impl std::fmt::Display for IllegalNumber {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = match self {
-            IllegalNumber::ParseFloatError(e) => &e.to_string(),
-            IllegalNumber::LeadingZero => "leading zero",
-            IllegalNumber::MissingExponent => "missing exponent",
-            IllegalNumber::MinusMissingDigit => "minus must be followed by a digit",
-            IllegalNumber::MissingFraction => "missing fraction",
-            IllegalNumber::InvalidFractionPart => "invalid fraction part",
-        };
-
-        write!(f, "{value}")
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum IllegalString {
-    UnescapedNewLine,
-    UnescapedTab,
-    InvalidUnicode,
-    InvalidEscape,
-    MissingClosingQuote,
-}
-
-impl std::fmt::Display for IllegalString {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = match self {
-            IllegalString::UnescapedNewLine => "unescaped newline",
-            IllegalString::UnescapedTab => "unescaped tab",
-            IllegalString::InvalidUnicode => "invalid unicode",
-            IllegalString::InvalidEscape => "invalid escape",
-            IllegalString::MissingClosingQuote => "missing closing quote",
-        };
-
-        write!(f, "{value}")
-    }
-}
-
 #[derive(Debug)]
 pub struct Lexer<'a> {
     input: &'a str,
@@ -138,7 +70,7 @@ pub struct Lexer<'a> {
     pub row: usize,
     pub column: usize,
     ch: Option<char>,
-    chars: Chars<'a>, // current char under examination
+    chars: Chars<'a>,
 }
 
 impl<'a> Lexer<'a> {

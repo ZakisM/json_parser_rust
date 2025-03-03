@@ -9,7 +9,6 @@ Err(
             Colon,
         ],
         actual: Comma,
-        origin: ",",
         invalid_row: 1,
         invalid_col: 26,
     },

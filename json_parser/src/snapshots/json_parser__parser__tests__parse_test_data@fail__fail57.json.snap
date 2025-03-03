@@ -21,7 +21,6 @@ Err(
                 ),
             ),
         ),
-        origin: "\\udc00\\ud800\\uggggxy",
         invalid_row: 1,
         invalid_col: 11,
     },

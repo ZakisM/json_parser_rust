@@ -10,7 +10,6 @@ Err(
             RBracket,
         ],
         actual: Colon,
-        origin: ":",
         invalid_row: 1,
         invalid_col: 26,
     },

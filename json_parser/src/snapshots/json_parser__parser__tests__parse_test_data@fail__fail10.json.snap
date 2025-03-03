@@ -9,7 +9,6 @@ Err(
             Eof,
         ],
         actual: String,
-        origin: "misplaced quoted value",
         invalid_row: 1,
         invalid_col: 35,
     },

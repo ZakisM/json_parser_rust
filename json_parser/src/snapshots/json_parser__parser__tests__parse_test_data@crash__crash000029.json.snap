@@ -11,15 +11,10 @@ Err(
         actual: Illegal(
             Some(
                 Number(
-                    ParseFloatError(
-                        ParseFloatError {
-                            kind: Invalid,
-                        },
-                    ),
+                    ParseFloatError,
                 ),
             ),
         ),
-        origin: "184467440737095516.184467440737095516184467440737095516.184467440737095516.6.6",
         invalid_row: 1,
         invalid_col: 1,
     },

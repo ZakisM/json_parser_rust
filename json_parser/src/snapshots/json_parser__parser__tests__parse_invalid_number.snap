@@ -10,15 +10,10 @@ Err(
         actual: Illegal(
             Some(
                 Number(
-                    ParseFloatError(
-                        ParseFloatError {
-                            kind: Invalid,
-                        },
-                    ),
+                    ParseFloatError,
                 ),
             ),
         ),
-        origin: "4eee",
         invalid_row: 3,
         invalid_col: 16,
     },

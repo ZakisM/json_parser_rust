@@ -21,7 +21,6 @@ Err(
                 ),
             ),
         ),
-        origin: "2.e-3",
         invalid_row: 1,
         invalid_col: 2,
     },

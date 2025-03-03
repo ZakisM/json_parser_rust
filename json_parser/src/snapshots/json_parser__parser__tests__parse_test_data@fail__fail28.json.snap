@@ -21,7 +21,6 @@ Err(
                 ),
             ),
         ),
-        origin: "line\\\nbreak",
         invalid_row: 1,
         invalid_col: 2,
     },

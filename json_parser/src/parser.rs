@@ -2,16 +2,16 @@ use bumpalo::{Bump, collections::Vec};
 
 use crate::{
     ast::{JsonProperty, JsonValue},
-    error::ExpectedTokenError,
-    token::{IllegalNumber, IllegalReason, Lexer, Token, TokenKind},
+    error::{ExpectedTokenError, IllegalReason},
+    illegal_number,
+    token::{Lexer, Token, TokenKind},
 };
 
 macro_rules! expected_token_err {
     ($actual_token:expr, $row:expr, $column:expr, $expected_token:path) => {
         return Err(ExpectedTokenError {
             expected: vec![$expected_token],
-            actual: $actual_token.kind.clone(),
-            origin: ($actual_token.origin).to_owned(),
+            actual: $actual_token.kind,
             invalid_row: $row,
             invalid_col: $column,
         })
@@ -19,8 +19,7 @@ macro_rules! expected_token_err {
     ($actual_token:expr, $row:expr, $column:expr, $( $variant:ident )|+) => {
         return Err(ExpectedTokenError {
             expected: vec![$(TokenKind::$variant),+],
-            actual: $actual_token.kind.clone(),
-            origin: ($actual_token.origin).to_owned(),
+            actual: $actual_token.kind,
             invalid_row: $row,
             invalid_col: $column,
         })
@@ -48,7 +47,7 @@ impl<'a> Parser<'a> {
     }
 
     fn next_token(&mut self) {
-        self.current_token = self.peek_token.clone();
+        self.current_token = self.peek_token;
         self.peek_token = self.lexer.next_token();
     }
 
@@ -72,12 +71,9 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        let n = literal.parse::<f64>().map_err(|e| ExpectedTokenError {
+        let n = literal.parse::<f64>().map_err(|_| ExpectedTokenError {
             expected: vec![TokenKind::Number],
-            actual: TokenKind::Illegal(Some(IllegalReason::Number(
-                IllegalNumber::ParseFloatError(e),
-            ))),
-            origin: literal.to_owned(),
+            actual: illegal_number!(ParseFloatError),
             invalid_row: self.lexer.row,
             invalid_col: self.peek_token.start_column,
         })?;

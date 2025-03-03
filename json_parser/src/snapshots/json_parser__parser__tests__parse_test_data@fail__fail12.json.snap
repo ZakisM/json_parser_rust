@@ -17,7 +17,6 @@ Err(
         actual: Illegal(
             None,
         ),
-        origin: "a",
         invalid_row: 1,
         invalid_col: 24,
     },

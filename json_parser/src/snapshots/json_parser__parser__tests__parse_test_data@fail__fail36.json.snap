@@ -21,7 +21,6 @@ Err(
                 ),
             ),
         ),
-        origin: "this is an unclosed string ]\n",
         invalid_row: 1,
         invalid_col: 2,
     },

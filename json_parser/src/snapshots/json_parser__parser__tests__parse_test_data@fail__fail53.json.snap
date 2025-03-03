@@ -9,7 +9,6 @@ Err(
             Eof,
         ],
         actual: RBrace,
-        origin: "}",
         invalid_row: 1,
         invalid_col: 3,
     },
