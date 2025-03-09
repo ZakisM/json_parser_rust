@@ -6,8 +6,8 @@ name = "json_parser_rust"
 version = "0.1.0"
 edition = "2024"
 
-# [build]
-# target = "x86_64-pc-windows-msvc"
+[build]
+target = "x86_64-pc-windows-msvc"
 
 [dependencies]
 bumpalo = { version = "3.16.0", features = ["collections"] }

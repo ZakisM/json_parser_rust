@@ -8,6 +8,12 @@ use std::{
 #[derive(Debug)]
 pub struct WideString(OsString);
 
+impl From<OsString> for WideString {
+    fn from(value: OsString) -> Self {
+        Self(value)
+    }
+}
+
 impl WideString {
     pub unsafe fn from_raw_parts(data: *const u16, len: i32) -> Self {
         let wide =
@@ -23,6 +29,10 @@ impl WideString {
             .collect::<Vec<_>>();
 
         unsafe { SysAllocString(wide.as_ptr()) }
+    }
+
+    pub fn into_inner(self) -> OsString {
+        self.0
     }
 }
 
