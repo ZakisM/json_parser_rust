@@ -15,11 +15,11 @@ impl std::fmt::Display for ExpectedTokenError {
             .iter()
             .map(|kind| format!("'{}'", kind.to_string().to_uppercase()))
             .collect::<Vec<_>>()
-            .join(", ");
+            .join(" | ");
 
         write!(
             f,
-            "expected token at row {} column {} to be one of: [{}] but got '{}' instead",
+            "expected token at row {} column {} to be one of: ({}) but got '{}' instead",
             self.invalid_row, self.invalid_col, expected, self.actual
         )
     }

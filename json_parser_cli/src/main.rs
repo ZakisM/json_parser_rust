@@ -6,9 +6,7 @@ use std::{
 use bumpalo::Bump;
 use json_parser::parser::Parser;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-fn main() -> Result<()> {
+fn main() {
     let Some(path) = env::args().nth(1) else {
         panic!("missing path")
     };
@@ -18,9 +16,8 @@ fn main() -> Result<()> {
     let bump = Bump::new();
     let parser = Parser::new(&input);
 
-    let parsed = parser.parse(&bump)?;
-
-    println!("{:#?}", parsed.flattened());
-
-    Ok(())
+    match parser.parse(&bump) {
+        Ok(res) => println!("{:#?}", res.flattened()),
+        Err(e) => eprintln!("{e}"),
+    }
 }
