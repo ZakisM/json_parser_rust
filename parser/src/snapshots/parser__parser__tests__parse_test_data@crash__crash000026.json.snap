@@ -1,0 +1,17 @@
+---
+source: parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/crash/crash000026.json
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            Eof,
+        ],
+        actual: Illegal(
+            None,
+        ),
+        invalid_row: 1,
+        invalid_col: 1011,
+    },
+)

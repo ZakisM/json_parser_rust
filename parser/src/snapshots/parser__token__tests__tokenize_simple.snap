@@ -1,0 +1,386 @@
+---
+source: parser/src/token.rs
+expression: "&lexer.collect::<Vec<_>>()"
+---
+[
+    Token {
+        kind: LBrace,
+        origin: "{",
+        start_column: 1,
+    },
+    Token {
+        kind: String,
+        origin: "string",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 10,
+    },
+    Token {
+        kind: String,
+        origin: "Hello, world!",
+        start_column: 12,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 27,
+    },
+    Token {
+        kind: String,
+        origin: "number",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 10,
+    },
+    Token {
+        kind: Number,
+        origin: "-42",
+        start_column: 12,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 15,
+    },
+    Token {
+        kind: String,
+        origin: "boolean",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 11,
+    },
+    Token {
+        kind: True,
+        origin: "true",
+        start_column: 13,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 17,
+    },
+    Token {
+        kind: String,
+        origin: "null",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 8,
+    },
+    Token {
+        kind: Null,
+        origin: "null",
+        start_column: 10,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 14,
+    },
+    Token {
+        kind: String,
+        origin: "array",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 9,
+    },
+    Token {
+        kind: LBracket,
+        origin: "[",
+        start_column: 11,
+    },
+    Token {
+        kind: Number,
+        origin: "1",
+        start_column: 12,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 13,
+    },
+    Token {
+        kind: Number,
+        origin: "2",
+        start_column: 15,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 16,
+    },
+    Token {
+        kind: Number,
+        origin: "3",
+        start_column: 18,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 19,
+    },
+    Token {
+        kind: Number,
+        origin: "4eee",
+        start_column: 21,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 25,
+    },
+    Token {
+        kind: String,
+        origin: "five",
+        start_column: 27,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 33,
+    },
+    Token {
+        kind: True,
+        origin: "true",
+        start_column: 35,
+    },
+    Token {
+        kind: RBracket,
+        origin: "]",
+        start_column: 39,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 40,
+    },
+    Token {
+        kind: String,
+        origin: "nested_object",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 17,
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+        start_column: 19,
+    },
+    Token {
+        kind: String,
+        origin: "nested_string",
+        start_column: 3,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 18,
+    },
+    Token {
+        kind: String,
+        origin: "This is a nested string",
+        start_column: 20,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 45,
+    },
+    Token {
+        kind: String,
+        origin: "nested_number",
+        start_column: 3,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 18,
+    },
+    Token {
+        kind: Number,
+        origin: "100",
+        start_column: 20,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 23,
+    },
+    Token {
+        kind: String,
+        origin: "nested_array",
+        start_column: 3,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 17,
+    },
+    Token {
+        kind: LBracket,
+        origin: "[",
+        start_column: 19,
+    },
+    Token {
+        kind: Number,
+        origin: "10",
+        start_column: 20,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 22,
+    },
+    Token {
+        kind: Number,
+        origin: "3.21865081787e-6",
+        start_column: 24,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 40,
+    },
+    Token {
+        kind: Number,
+        origin: "30",
+        start_column: 42,
+    },
+    Token {
+        kind: RBracket,
+        origin: "]",
+        start_column: 44,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 45,
+    },
+    Token {
+        kind: String,
+        origin: "nested_boolean",
+        start_column: 3,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 19,
+    },
+    Token {
+        kind: False,
+        origin: "false",
+        start_column: 21,
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+        start_column: 2,
+    },
+    Token {
+        kind: Comma,
+        origin: ",",
+        start_column: 3,
+    },
+    Token {
+        kind: String,
+        origin: "another_nested_object",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 25,
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+        start_column: 27,
+    },
+    Token {
+        kind: String,
+        origin: "level1",
+        start_column: 29,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 37,
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+        start_column: 39,
+    },
+    Token {
+        kind: String,
+        origin: "level2",
+        start_column: 41,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 49,
+    },
+    Token {
+        kind: LBrace,
+        origin: "{",
+        start_column: 51,
+    },
+    Token {
+        kind: String,
+        origin: "key",
+        start_column: 53,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 58,
+    },
+    Token {
+        kind: String,
+        origin: "value",
+        start_column: 60,
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+        start_column: 68,
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+        start_column: 70,
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+        start_column: 72,
+    },
+    Token {
+        kind: RBrace,
+        origin: "}",
+        start_column: 1,
+    },
+    Token {
+        kind: Eof,
+        origin: "",
+        start_column: 1,
+    },
+]

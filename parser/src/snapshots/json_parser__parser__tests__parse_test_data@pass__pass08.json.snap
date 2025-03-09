@@ -1,0 +1,10 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/pass/pass08.json
+---
+Ok(
+    Number(
+        1.0,
+    ),
+)

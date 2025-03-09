@@ -1,0 +1,10 @@
+[package]
+name = "parser"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bumpalo = { version = "3.16.0", features = ["collections"] }
+
+[dev-dependencies]
+insta = { workspace = true }

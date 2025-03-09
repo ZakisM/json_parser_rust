@@ -1,0 +1,10 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/crash/crash000035.json
+---
+Ok(
+    Number(
+        -9.223372036854776e18,
+    ),
+)

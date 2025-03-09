@@ -1,5 +1,5 @@
 [workspace]
-members = ["json_parser", "json_parser_cli"]
+members = ["parser", "cli"]
 
 [package]
 name = "json_parser_rust"
@@ -11,7 +11,7 @@ edition = "2024"
 
 [dependencies]
 bumpalo = { version = "3.16.0", features = ["collections"] }
-json_parser = { path = "./json_parser" }
+parser = { path = "./parser" }
 
 [workspace.dependencies]
 insta = { version = "1.42.0", features = ["glob"] }

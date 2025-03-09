@@ -1,0 +1,17 @@
+---
+source: parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/pass/pass04.json
+---
+Ok(
+    Array(
+        [
+            Number(
+                3.141592653589793,
+            ),
+            Number(
+                3e-117,
+            ),
+        ],
+    ),
+)

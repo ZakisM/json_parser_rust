@@ -1,0 +1,264 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/log.json
+---
+Ok(
+    Object(
+        [
+            JsonProperty {
+                key: "jk_host",
+                value: String(
+                    "jenkinshost100.my-domain-name.net",
+                ),
+            },
+            JsonProperty {
+                key: "class_name",
+                value: String(
+                    "ID\\\\Shared\\\\Logging\\\\Logger",
+                ),
+            },
+            JsonProperty {
+                key: "logger_name",
+                value: String(
+                    "important_logs_go_here!!",
+                ),
+            },
+            JsonProperty {
+                key: "cgi_tte_ms",
+                value: String(
+                    "3173.81",
+                ),
+            },
+            JsonProperty {
+                key: "start_timestamp",
+                value: Number(
+                    1532362756.0,
+                ),
+            },
+            JsonProperty {
+                key: "user_agent_device",
+                value: String(
+                    "Desktop",
+                ),
+            },
+            JsonProperty {
+                key: "slush",
+                value: String(
+                    "facility=important_logs_generated.gelf\\ngelf_version=1.0\\nfile=NA\\nanother_value_includ=205894\\nwe_got_some_one=1\\n@version=1\\nlog_length=1285\\nline=0\\nbools_are_an_awesome_thingy=0\\nuser_agent_version=\\nblubbergnaw_datas=somehostname.and.a.net\\npower2=65360\\nbot_flag=0\\nnumbers=28921\\na_host=somehostname.and.a.net\\nwe_can_urls=https://should.always.be.used.instead.of.http.de/\\nnumargs=42\\nempty_argumt=\\ntype=type01\\nlong_argument_name_here=5\\nanother_bool=0\\nsilly_name_thing=UpperAndLower_Casess\\nyet_anothernother=https://is.much.better.then.http.because.of.stuff/with/path/is/good/too/12345894/",
+                ),
+            },
+            JsonProperty {
+                key: "and_an_ip4",
+                value: String(
+                    "12.345.678.90",
+                ),
+            },
+            JsonProperty {
+                key: "@version",
+                value: String(
+                    "1",
+                ),
+            },
+            JsonProperty {
+                key: "error_url_path",
+                value: String(
+                    "/usr/local/application/with/a/lot/of/sub/directories/in/it.rs",
+                ),
+            },
+            JsonProperty {
+                key: "logstash",
+                value: String(
+                    "who.lines.logstash.probably.on",
+                ),
+            },
+            JsonProperty {
+                key: "uuids->",
+                value: String(
+                    "36ba15e0-d04f-4ae8-a6aa-0d3e65490d76",
+                ),
+            },
+            JsonProperty {
+                key: "anotherfilename",
+                value: String(
+                    "/usr/local/really/long/applicatio/name/that/leads/to/a/script",
+                ),
+            },
+            JsonProperty {
+                key: "environment",
+                value: String(
+                    "Development",
+                ),
+            },
+            JsonProperty {
+                key: "floatasstr",
+                value: String(
+                    "123.56",
+                ),
+            },
+            JsonProperty {
+                key: "there_string:",
+                value: String(
+                    "oh my what?",
+                ),
+            },
+            JsonProperty {
+                key: "arry",
+                value: Array(
+                    [
+                        String(
+                            "elemen",
+                        ),
+                        String(
+                            "ts ",
+                        ),
+                        String(
+                            "go in",
+                        ),
+                        String(
+                            "her",
+                        ),
+                        String(
+                            "e because I ",
+                        ),
+                        String(
+                            "typ",
+                        ),
+                        String(
+                            "e a",
+                        ),
+                        String(
+                            "lot!!",
+                        ),
+                    ],
+                ),
+            },
+            JsonProperty {
+                key: "message",
+                value: String(
+                    "This is just a silly json to benchmark to emulate different sturcutres in reality!",
+                ),
+            },
+            JsonProperty {
+                key: "argh",
+                value: String(
+                    "ClbaulgV//Xer8lJ5jr10g==",
+                ),
+            },
+            JsonProperty {
+                key: "oh_my_files",
+                value: String(
+                    "/usr/local/there/are/way/too/many/file/names/in/this/json.txt",
+                ),
+            },
+            JsonProperty {
+                key: "user_agent_os",
+                value: String(
+                    "unknown os",
+                ),
+            },
+            JsonProperty {
+                key: "error_host",
+                value: String(
+                    "even.hosts.have.errors",
+                ),
+            },
+            JsonProperty {
+                key: "application",
+                value: String(
+                    "man",
+                ),
+            },
+            JsonProperty {
+                key: "yam_message",
+                value: String(
+                    "I can just keep writing here for all ethernity and bla bla bla bla it is just more",
+                ),
+            },
+            JsonProperty {
+                key: "user_agent_browser",
+                value: String(
+                    "unknown",
+                ),
+            },
+            JsonProperty {
+                key: "error_url",
+                value: String(
+                    "some.urls.dont.use.https/but/include/a/silly/path/so/we/can/include/them/here.jsonp",
+                ),
+            },
+            JsonProperty {
+                key: "short_message",
+                value: String(
+                    "ARE SHORT BECAUSE!!!",
+                ),
+            },
+            JsonProperty {
+                key: "action",
+                value: String(
+                    "give up.....",
+                ),
+            },
+            JsonProperty {
+                key: "cakes!",
+                value: String(
+                    "please",
+                ),
+            },
+            JsonProperty {
+                key: "type",
+                value: String(
+                    "chocol",
+                ),
+            },
+            JsonProperty {
+                key: "log_level",
+                value: String(
+                    "INFO",
+                ),
+            },
+            JsonProperty {
+                key: "too_many_ho",
+                value: String(
+                    "sts.oh.my.we.can.just.keepit",
+                ),
+            },
+            JsonProperty {
+                key: "controller",
+                value: String(
+                    "no_one_has_controll!",
+                ),
+            },
+            JsonProperty {
+                key: "key_keykeykey",
+                value: String(
+                    "key",
+                ),
+            },
+            JsonProperty {
+                key: "a proper_timestamp_ja",
+                value: String(
+                    "2018-07-23T12:19:16-04:00",
+                ),
+            },
+            JsonProperty {
+                key: "and_yet_another",
+                value: String(
+                    "host.with.lots.of.dots.in.it.gr",
+                ),
+            },
+            JsonProperty {
+                key: "@timestamp",
+                value: String(
+                    "2018-07-23T16:19:16.821Z",
+                ),
+            },
+            JsonProperty {
+                key: "level",
+                value: Number(
+                    6.0,
+                ),
+            },
+        ],
+    ),
+)

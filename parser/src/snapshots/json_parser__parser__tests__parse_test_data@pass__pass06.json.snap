@@ -1,0 +1,10 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/pass/pass06.json
+---
+Ok(
+    Boolean(
+        true,
+    ),
+)

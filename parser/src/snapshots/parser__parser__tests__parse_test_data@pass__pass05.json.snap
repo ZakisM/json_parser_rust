@@ -1,0 +1,10 @@
+---
+source: parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/pass/pass05.json
+---
+Ok(
+    Number(
+        1.2345678900000002e34,
+    ),
+)

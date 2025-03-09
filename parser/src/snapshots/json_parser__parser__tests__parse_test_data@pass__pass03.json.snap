@@ -1,0 +1,30 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/pass/pass03.json
+---
+Ok(
+    Object(
+        [
+            JsonProperty {
+                key: "JSON Test Pattern pass3",
+                value: Object(
+                    [
+                        JsonProperty {
+                            key: "The outermost value",
+                            value: String(
+                                "must be an object or array.",
+                            ),
+                        },
+                        JsonProperty {
+                            key: "In this test",
+                            value: String(
+                                "It is an object.",
+                            ),
+                        },
+                    ],
+                ),
+            },
+        ],
+    ),
+)

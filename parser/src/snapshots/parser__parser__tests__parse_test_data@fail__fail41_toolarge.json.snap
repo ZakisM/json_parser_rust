@@ -1,0 +1,10 @@
+---
+source: parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/fail/fail41_toolarge.json
+---
+Ok(
+    Number(
+        1.8446744073709552e19,
+    ),
+)

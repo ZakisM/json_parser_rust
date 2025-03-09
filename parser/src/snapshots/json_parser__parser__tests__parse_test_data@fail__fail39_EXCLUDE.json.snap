@@ -1,0 +1,29 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/fail/fail39_EXCLUDE.json
+---
+Ok(
+    Object(
+        [
+            JsonProperty {
+                key: "name",
+                value: Number(
+                    1.0,
+                ),
+            },
+            JsonProperty {
+                key: "name",
+                value: Number(
+                    2.0,
+                ),
+            },
+            JsonProperty {
+                key: "this is allowable as per the json spec",
+                value: Boolean(
+                    true,
+                ),
+            },
+        ],
+    ),
+)

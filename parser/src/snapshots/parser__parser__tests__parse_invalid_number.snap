@@ -1,0 +1,20 @@
+---
+source: parser/src/parser.rs
+expression: parser.parse(&bump)
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            Number,
+        ],
+        actual: Illegal(
+            Some(
+                Number(
+                    ParseFloatError,
+                ),
+            ),
+        ),
+        invalid_row: 3,
+        invalid_col: 16,
+    },
+)

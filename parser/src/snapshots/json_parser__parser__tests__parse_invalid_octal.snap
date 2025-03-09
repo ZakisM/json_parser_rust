@@ -1,0 +1,26 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            String,
+            Number,
+            Null,
+            LBrace,
+            LBracket,
+            True,
+            False,
+        ],
+        actual: Illegal(
+            Some(
+                Number(
+                    LeadingZero,
+                ),
+            ),
+        ),
+        invalid_row: 2,
+        invalid_col: 34,
+    },
+)

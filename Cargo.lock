@@ -28,6 +28,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1628fb46dfa0b37568d12e5edd512553eccf6a22a78e8bde00bb4aed84d5bdbf"
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "bumpalo",
+ "parser",
+]
+
+[[package]]
 name = "console"
 version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -74,27 +82,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "json_parser"
-version = "0.1.0"
-dependencies = [
- "bumpalo",
- "insta",
-]
-
-[[package]]
-name = "json_parser_cli"
-version = "0.1.0"
-dependencies = [
- "bumpalo",
- "json_parser",
-]
-
-[[package]]
 name = "json_parser_rust"
 version = "0.1.0"
 dependencies = [
  "bumpalo",
- "json_parser",
+ "parser",
 ]
 
 [[package]]
@@ -126,6 +118,14 @@ name = "once_cell"
 version = "1.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "945462a4b81e43c4e3ba96bd7b49d834c6f61198356aa858733bc4acf3cbe62e"
+
+[[package]]
+name = "parser"
+version = "0.1.0"
+dependencies = [
+ "bumpalo",
+ "insta",
+]
 
 [[package]]
 name = "pin-project"

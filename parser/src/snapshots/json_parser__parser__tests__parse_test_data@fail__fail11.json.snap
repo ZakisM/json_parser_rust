@@ -1,0 +1,18 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/fail/fail11.json
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            Comma,
+            RBrace,
+        ],
+        actual: Illegal(
+            None,
+        ),
+        invalid_row: 1,
+        invalid_col: 26,
+    },
+)

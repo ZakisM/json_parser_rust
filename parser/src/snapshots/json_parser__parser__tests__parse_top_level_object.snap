@@ -1,0 +1,127 @@
+---
+source: json_parser/src/parser.rs
+expression: parser.parse(&bump)
+---
+Ok(
+    Object(
+        [
+            JsonProperty {
+                key: "string",
+                value: String(
+                    "Hello, world!",
+                ),
+            },
+            JsonProperty {
+                key: "number",
+                value: Number(
+                    -42.0,
+                ),
+            },
+            JsonProperty {
+                key: "nested_object",
+                value: Object(
+                    [
+                        JsonProperty {
+                            key: "nested_string",
+                            value: String(
+                                "This is a nested string",
+                            ),
+                        },
+                        JsonProperty {
+                            key: "nested_number",
+                            value: Array(
+                                [
+                                    Number(
+                                        100.0,
+                                    ),
+                                    Number(
+                                        3.21865081787e-6,
+                                    ),
+                                    Number(
+                                        300.0,
+                                    ),
+                                    Array(
+                                        [
+                                            Number(
+                                                400.0,
+                                            ),
+                                            Number(
+                                                -500.0,
+                                            ),
+                                            Array(
+                                                [
+                                                    Number(
+                                                        600.0,
+                                                    ),
+                                                    Array(
+                                                        [
+                                                            Number(
+                                                                700.0,
+                                                            ),
+                                                            Object(
+                                                                [
+                                                                    JsonProperty {
+                                                                        key: "secret",
+                                                                        value: Number(
+                                                                            12345.0,
+                                                                        ),
+                                                                    },
+                                                                ],
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        },
+                    ],
+                ),
+            },
+            JsonProperty {
+                key: "boolean",
+                value: Boolean(
+                    true,
+                ),
+            },
+            JsonProperty {
+                key: "nested_deep_empty_array",
+                value: Array(
+                    [
+                        Array(
+                            [
+                                Array(
+                                    [],
+                                ),
+                            ],
+                        ),
+                        Object(
+                            [],
+                        ),
+                    ],
+                ),
+            },
+            JsonProperty {
+                key: "nested_empties",
+                value: Object(
+                    [
+                        JsonProperty {
+                            key: "empty_object",
+                            value: Object(
+                                [],
+                            ),
+                        },
+                        JsonProperty {
+                            key: "empty_array",
+                            value: Array(
+                                [],
+                            ),
+                        },
+                    ],
+                ),
+            },
+        ],
+    ),
+)

@@ -1,0 +1,14 @@
+---
+source: parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/fail/fail60.json
+---
+Ok(
+    Array(
+        [
+            Number(
+                inf,
+            ),
+        ],
+    ),
+)

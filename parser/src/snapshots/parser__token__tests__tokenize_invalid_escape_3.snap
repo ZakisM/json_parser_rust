@@ -1,0 +1,37 @@
+---
+source: parser/src/token.rs
+expression: "&lexer.collect::<Vec<_>>()"
+---
+[
+    Token {
+        kind: LBrace,
+        origin: "{",
+        start_column: 1,
+    },
+    Token {
+        kind: String,
+        origin: "key",
+        start_column: 2,
+    },
+    Token {
+        kind: Colon,
+        origin: ":",
+        start_column: 7,
+    },
+    Token {
+        kind: Illegal(
+            Some(
+                String(
+                    MissingClosingQuote,
+                ),
+            ),
+        ),
+        origin: "\\}",
+        start_column: 9,
+    },
+    Token {
+        kind: Eof,
+        origin: "",
+        start_column: 12,
+    },
+]

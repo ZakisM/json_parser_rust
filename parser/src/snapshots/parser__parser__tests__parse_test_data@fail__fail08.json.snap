@@ -1,0 +1,15 @@
+---
+source: parser/src/parser.rs
+expression: parser.parse(&bump)
+input_file: test_data/fail/fail08.json
+---
+Err(
+    ExpectedTokenError {
+        expected: [
+            Eof,
+        ],
+        actual: RBracket,
+        invalid_row: 1,
+        invalid_col: 16,
+    },
+)
