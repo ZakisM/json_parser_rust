@@ -10,7 +10,8 @@ pub struct WideString(OsString);
 
 impl WideString {
     pub unsafe fn from_raw_parts(data: *const u16, len: i32) -> Self {
-        let wide = slice::from_raw_parts(data, len.try_into().expect("invalid len passed"));
+        let wide =
+            unsafe { slice::from_raw_parts(data, len.try_into().expect("invalid len passed")) };
 
         Self(OsString::from_wide(wide))
     }
@@ -40,6 +41,6 @@ impl DerefMut for WideString {
 }
 
 #[link(name = "oleaut32")]
-extern "system" {
+unsafe extern "system" {
     fn SysAllocString(psz: *const u16) -> *mut u16;
 }
