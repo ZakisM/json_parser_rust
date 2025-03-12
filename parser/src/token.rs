@@ -1,9 +1,6 @@
 use std::str::Chars;
 
-use crate::{
-    error::{IllegalReason, IllegalString},
-    illegal_number,
-};
+use crate::{error::IllegalReason, illegal_number, illegal_string};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
@@ -147,10 +144,11 @@ impl<'a> Lexer<'a> {
 
     fn is_legal_unicode(&mut self) -> Option<IllegalReason> {
         let start_pos = self.position;
+        let start_column = self.column;
 
         for _ in 0..4 {
             if !matches!(self.ch, Some(c) if c.is_ascii_hexdigit()) {
-                return Some(IllegalReason::String(IllegalString::InvalidUnicode));
+                return illegal_string!(InvalidUnicode, start_column - 2);
             }
 
             self.read_char();
@@ -158,17 +156,18 @@ impl<'a> Lexer<'a> {
 
         let codepoint = &self.input[start_pos..self.position];
 
-        if u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF) {
-            None
-        } else {
-            Some(IllegalReason::String(IllegalString::InvalidUnicode))
+        if !u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF) {
+            return illegal_string!(InvalidUnicode, start_column - 2);
         }
+
+        None
     }
 
     fn read_string(&mut self) -> (&'a str, Option<IllegalReason>) {
         self.read_char(); // consume opening double-quote
 
         let start_pos = self.position;
+        let start_column = self.column;
         let mut illegal_reason = None;
         let mut has_closing_quote = false;
 
@@ -196,18 +195,17 @@ impl<'a> Lexer<'a> {
                             self.read_char();
                             illegal_reason = self.is_legal_unicode();
                         } else {
-                            illegal_reason =
-                                Some(IllegalReason::String(IllegalString::InvalidEscape))
+                            illegal_reason = illegal_string!(InvalidEscape, self.column - 1);
                         }
                     }
 
                     continue;
                 }
                 '\t' if illegal_reason.is_none() => {
-                    illegal_reason = Some(IllegalReason::String(IllegalString::UnescapedTab));
+                    illegal_reason = illegal_string!(UnescapedTab, self.column);
                 }
                 '\n' if illegal_reason.is_none() => {
-                    illegal_reason = Some(IllegalReason::String(IllegalString::UnescapedNewLine));
+                    illegal_reason = illegal_string!(UnescapedNewLine, self.column);
                 }
                 _ => (),
             };
@@ -220,7 +218,7 @@ impl<'a> Lexer<'a> {
         } else {
             (
                 &self.input[start_pos..self.position],
-                Some(IllegalReason::String(IllegalString::MissingClosingQuote)),
+                illegal_string!(MissingClosingQuote, start_column - 1),
             )
         }
     }

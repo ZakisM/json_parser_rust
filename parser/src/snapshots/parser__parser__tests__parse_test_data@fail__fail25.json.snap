@@ -17,7 +17,9 @@ Err(
         actual: Illegal(
             Some(
                 String(
-                    UnescapedTab,
+                    UnescapedTab(
+                        3,
+                    ),
                 ),
             ),
         ),

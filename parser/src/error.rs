@@ -17,10 +17,24 @@ impl std::fmt::Display for ExpectedTokenError {
             .collect::<Vec<_>>()
             .join(" | ");
 
+        // Create a local variable to store the column instead of trying to modify self
+        let mut col = self.invalid_col;
+
+        // Update the local column variable if needed based on the token kind
+        if let TokenKind::Illegal(Some(IllegalReason::String(illegal_string))) = self.actual {
+            match illegal_string {
+                IllegalString::UnescapedNewLine(column)
+                | IllegalString::UnescapedTab(column)
+                | IllegalString::InvalidUnicode(column)
+                | IllegalString::InvalidEscape(column)
+                | IllegalString::MissingClosingQuote(column) => col = column,
+            }
+        }
+
         write!(
             f,
             "expected token at row {} column {} to be one of: ({}) but got '{}' instead",
-            self.invalid_row, self.invalid_col, expected, self.actual
+            self.invalid_row, col, expected, self.actual
         )
     }
 }
@@ -73,21 +87,21 @@ impl std::fmt::Display for IllegalNumber {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum IllegalString {
-    UnescapedNewLine,
-    UnescapedTab,
-    InvalidUnicode,
-    InvalidEscape,
-    MissingClosingQuote,
+    UnescapedNewLine(usize),
+    UnescapedTab(usize),
+    InvalidUnicode(usize),
+    InvalidEscape(usize),
+    MissingClosingQuote(usize),
 }
 
 impl std::fmt::Display for IllegalString {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value = match self {
-            IllegalString::UnescapedNewLine => "unescaped newline",
-            IllegalString::UnescapedTab => "unescaped tab",
-            IllegalString::InvalidUnicode => "invalid unicode",
-            IllegalString::InvalidEscape => "invalid escape",
-            IllegalString::MissingClosingQuote => "missing closing quote",
+            IllegalString::UnescapedNewLine(_) => "unescaped newline",
+            IllegalString::UnescapedTab(_) => "unescaped tab",
+            IllegalString::InvalidUnicode(_) => "invalid unicode",
+            IllegalString::InvalidEscape(_) => "invalid escape",
+            IllegalString::MissingClosingQuote(_) => "missing closing quote",
         };
 
         write!(f, "{value}")
@@ -100,5 +114,14 @@ macro_rules! illegal_number {
         TokenKind::Illegal(Some(IllegalReason::Number(
             $crate::error::IllegalNumber::$variant,
         )))
+    };
+}
+
+#[macro_export]
+macro_rules! illegal_string {
+    ($variant:ident, $read_position:expr) => {
+        Some(IllegalReason::String(
+            $crate::error::IllegalString::$variant($read_position),
+        ))
     };
 }

@@ -22,7 +22,9 @@ expression: "&lexer.collect::<Vec<_>>()"
         kind: Illegal(
             Some(
                 String(
-                    MissingClosingQuote,
+                    MissingClosingQuote(
+                        9,
+                    ),
                 ),
             ),
         ),
