@@ -144,11 +144,11 @@ impl<'a> Lexer<'a> {
 
     fn is_legal_unicode(&mut self) -> Option<IllegalReason> {
         let start_pos = self.position;
-        let start_column = self.column;
+        let start_column = self.column - 2; // - 2 because we start at \u
 
         for _ in 0..4 {
             if !matches!(self.ch, Some(c) if c.is_ascii_hexdigit()) {
-                return illegal_string!(InvalidUnicode, start_column - 2);
+                return illegal_string!(InvalidUnicode, start_column);
             }
 
             self.read_char();
@@ -157,7 +157,7 @@ impl<'a> Lexer<'a> {
         let codepoint = &self.input[start_pos..self.position];
 
         if !u32::from_str_radix(codepoint, 16).is_ok_and(|v| v <= 0x10FFFF) {
-            return illegal_string!(InvalidUnicode, start_column - 2);
+            return illegal_string!(InvalidUnicode, start_column);
         }
 
         None

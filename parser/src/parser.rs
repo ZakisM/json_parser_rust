@@ -7,25 +7,6 @@ use crate::{
     token::{Lexer, Token, TokenKind},
 };
 
-macro_rules! expected_token_err {
-    ($actual_token:expr, $row:expr, $column:expr, $expected_token:path) => {
-        return Err(ExpectedTokenError {
-            expected: vec![$expected_token],
-            actual: $actual_token.kind,
-            invalid_row: $row,
-            invalid_col: $column,
-        })
-    };
-    ($actual_token:expr, $row:expr, $column:expr, $( $variant:ident )|+) => {
-        return Err(ExpectedTokenError {
-            expected: vec![$(TokenKind::$variant),+],
-            actual: $actual_token.kind,
-            invalid_row: $row,
-            invalid_col: $column,
-        })
-    };
-}
-
 #[derive(Debug)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -51,14 +32,22 @@ impl<'a> Parser<'a> {
         self.peek_token = self.lexer.next_token();
     }
 
+    fn create_expected_token_error(
+        &self,
+        expected: std::vec::Vec<TokenKind>,
+        actual_token: Token<'a>,
+    ) -> ExpectedTokenError {
+        ExpectedTokenError {
+            expected,
+            actual: actual_token.kind,
+            invalid_row: self.lexer.row,
+            invalid_col: actual_token.start_column,
+        }
+    }
+
     fn expect_peek(&mut self, expected: TokenKind) -> Result<(), ExpectedTokenError> {
         if self.peek_token.kind != expected {
-            expected_token_err!(
-                self.peek_token,
-                self.lexer.row,
-                self.peek_token.start_column,
-                expected
-            )
+            return Err(self.create_expected_token_error(vec![expected], self.peek_token));
         }
 
         self.next_token();
@@ -71,14 +60,15 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_number(&self, literal: &'a str) -> Result<JsonValue<'a>, ExpectedTokenError> {
-        let n = literal.parse::<f64>().map_err(|_| ExpectedTokenError {
-            expected: vec![TokenKind::Number],
-            actual: illegal_number!(ParseFloatError),
-            invalid_row: self.lexer.row,
-            invalid_col: self.peek_token.start_column,
-        })?;
-
-        Ok(JsonValue::Number(n))
+        literal
+            .parse::<f64>()
+            .map(JsonValue::Number)
+            .map_err(|_| ExpectedTokenError {
+                expected: vec![TokenKind::Number],
+                actual: illegal_number!(ParseFloatError),
+                invalid_row: self.lexer.row,
+                invalid_col: self.peek_token.start_column,
+            })
     }
 
     fn parse_value(&mut self, bump: &'a Bump) -> Result<JsonValue<'a>, ExpectedTokenError> {
@@ -91,12 +81,18 @@ impl<'a> Parser<'a> {
             TokenKind::LBrace => self.parse_object(bump)?,
             TokenKind::LBracket => self.parse_array(bump)?,
             _ => {
-                expected_token_err!(
+                return Err(self.create_expected_token_error(
+                    vec![
+                        TokenKind::String,
+                        TokenKind::Number,
+                        TokenKind::Null,
+                        TokenKind::LBrace,
+                        TokenKind::LBracket,
+                        TokenKind::True,
+                        TokenKind::False,
+                    ],
                     self.peek_token,
-                    self.lexer.row,
-                    self.peek_token.start_column,
-                    String | Number | Null | LBrace | LBracket | True | False
-                )
+                ));
             }
         };
         self.next_token();
@@ -133,12 +129,10 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBracket => break,
                 _ => {
-                    expected_token_err!(
+                    return Err(self.create_expected_token_error(
+                        vec![TokenKind::Comma, TokenKind::RBracket],
                         self.peek_token,
-                        self.lexer.row,
-                        self.peek_token.start_column,
-                        Comma | RBracket
-                    )
+                    ));
                 }
             }
         }
@@ -163,12 +157,10 @@ impl<'a> Parser<'a> {
                 TokenKind::Comma => self.next_token(),
                 TokenKind::RBrace => break,
                 _ => {
-                    expected_token_err!(
+                    return Err(self.create_expected_token_error(
+                        vec![TokenKind::Comma, TokenKind::RBrace],
                         self.peek_token,
-                        self.lexer.row,
-                        self.peek_token.start_column,
-                        Comma | RBrace
-                    )
+                    ));
                 }
             }
         }
@@ -185,12 +177,7 @@ impl<'a> Parser<'a> {
             (&self.current_token.kind, &self.peek_token.kind),
             (TokenKind::RBrace, TokenKind::Eof)
         ) {
-            expected_token_err!(
-                self.peek_token,
-                self.lexer.row,
-                self.peek_token.start_column,
-                TokenKind::Eof
-            )
+            return Err(self.create_expected_token_error(vec![TokenKind::Eof], self.peek_token));
         }
 
         Ok(result)
@@ -205,12 +192,7 @@ impl<'a> Parser<'a> {
             (&self.current_token.kind, &self.peek_token.kind),
             (TokenKind::RBracket, TokenKind::Eof)
         ) {
-            expected_token_err!(
-                self.peek_token,
-                self.lexer.row,
-                self.peek_token.start_column,
-                TokenKind::Eof
-            )
+            return Err(self.create_expected_token_error(vec![TokenKind::Eof], self.peek_token));
         }
 
         Ok(result)
@@ -231,12 +213,18 @@ impl<'a> Parser<'a> {
 
                 Ok(result)
             }
-            _ => expected_token_err!(
+            _ => Err(self.create_expected_token_error(
+                vec![
+                    TokenKind::String,
+                    TokenKind::Number,
+                    TokenKind::Null,
+                    TokenKind::LBrace,
+                    TokenKind::LBracket,
+                    TokenKind::True,
+                    TokenKind::False,
+                ],
                 self.peek_token,
-                self.lexer.row,
-                self.peek_token.start_column,
-                String | Number | Null | LBrace | LBracket | True | False
-            ),
+            )),
         }
     }
 }
